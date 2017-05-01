@@ -1,0 +1,46 @@
+{
+  "name": "madul",
+  "version": "1.0.0",
+  "description": "A simple tool that makes writing async code fun & easy",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "scripts": {
+    "prepublish": "gulp prepublish",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "async",
+    "module",
+    "class"
+  ],
+  "author": {
+    "name": "Bryan Maynard",
+    "email": "bsgbryan@gmail.com",
+    "url": "https://bsgbryan.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:bsgbryan/madul.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bsgbryan/madul/issues"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "microtime": "^2.1.3",
+    "prettyjson": "^1.2.1",
+    "q": "^1.5.0",
+    "winston": "^2.3.1"
+  },
+  "devDependencies": {
+    "del": "^2.2.2",
+    "gulp": "github:gulpjs/gulp#4.0",
+    "gulp-coffee": "^2.3.4",
+    "gulp-exclude-gitignore": "^1.1.1",
+    "gulp-hub": "^4.1.0",
+    "gulp-line-ending-corrector": "^1.0.1",
+    "gulp-nsp": "^2.4.2"
+  }
+}
