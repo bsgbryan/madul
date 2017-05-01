@@ -7,8 +7,8 @@ import Module from 'madul'
 
 class Caller extends Module
 
-  deps: [ 'fs', 'phone' ] # Dependencies (can be 3rd party or peer modules)
-  pub:  [ 'maybe' ]       # Public API methods (get wrapped in magic)
+  deps: [ 'fs', 'phone' ] # Dependencies (node, 3rd party, & project modules)
+  pub:  [ 'maybe' ]       # Public API methods (wrapped in magic)
 
   maybe: (person) =>
     @fs.readFile 'contacts', 'utf8', (err, numbers) =>
@@ -22,3 +22,5 @@ class Caller extends Module
 ## What is madul?
 
 _Coming soon_
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
