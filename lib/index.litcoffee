@@ -101,7 +101,7 @@
           n = name.replace /\W+/g, '_'
           @[n] = mod
 
-        async.each deps, (d, next) =>
+        async.eachSeries deps, (d, next) =>
           if @[d]? == false
             if available[d]? == true
               add_dependency d, available[d]
