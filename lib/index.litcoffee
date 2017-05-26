@@ -8,26 +8,10 @@
 
     logger = require './logger'
 
-    classes     = { }
     available   = { }
     initialized = { }
 
     class Madul
-
-      constructor: (madul_name, class_name) ->
-        @debug = (msg, data) -> logger.debug msg, data
-        @info  = (msg, data) -> logger.info  msg, data
-        @warn  = (msg, data) -> logger.warn  msg, data
-        @error = (msg, data) -> logger.error msg, data
-
-        @clazz       = class_name || arguments.callee.caller.name
-        @madul_name  = madul_name
-
-        classes[@clazz] = madul_name
-
-        initialized[@clazz] = false unless initialized[@clazz] == true
-
-        logger.trace "Instantiating #{@clazz}"
 
       do_wrap: (method) =>
         callMe = @[method]
@@ -66,6 +50,10 @@
 
       wrap_methods: => @pub?.forEach (method) => @do_wrap method
 
+      strip: (name) => name.toLowerCase().replace /\W+/g, ''
+
+      make_available: (name, mod) => available[@strip name] = mod
+
       hydrate: (deps, done) =>
         load = (name, path, loaded) =>
           mod = require path
@@ -74,13 +62,13 @@
             new mod name
               .initialize @ctor_params?[name]
               .then (mod) =>
-                available[name] = mod
+                @make_available name, mod
                 loaded true
           else
-            available[name] = mod
+            @make_available name, mod
             loaded true
 
-        check_directory = (path, dep, loaded) =>
+        check = (path, dep, loaded) =>
           fs.readdir path, (err, files) =>
             if err?
               done type: 'ERROR', info: err
@@ -90,7 +78,7 @@
 
                 fs.stat depth, (e, s) =>
                   if s.isDirectory() && f[0] != '.'
-                    check_directory depth, dep, => next()
+                    check depth, dep, => next()
                   else if s.isFile() && f.substring(0, f.length - 3) == dep
                     load f.substring(0, f.length - 3), depth, => loaded true
                   else
@@ -101,18 +89,24 @@
           n = name.replace /\W+/g, '_'
           @[n] = mod
 
+        do_add = (name, next) =>
+          add_dependency name, available[@strip name]
+          next()
+
+        add = (name, resource, next) =>
+          @make_available name, require resource
+          do_add name, next
+
         async.eachSeries deps, (d, next) =>
           if @[d]? == false
-            if available[d]? == true
-              add_dependency d, available[d]
-              next()
+            if available[@strip d]? == true
+              do_add d, next
             else
               try
-                available[d] = require d
-                add_dependency d, available[d]
-                next()
+                add d, d, next
               catch e
-                pkg = "#{process.cwd()}/node_modules/#{d}/package.json"
+                cwd = process.cwd()
+                pkg = "#{cwd}/node_modules/#{d}/package.json"
 
                 fs.stat pkg, (err, stat) =>
                   if stat?.isFile()
@@ -120,15 +114,9 @@
                       json = JSON.parse data
                       main = json.main || json._main
 
-                      available[d] = require "#{process.cwd()}/node_modules/#{d}/#{main}"
-
-                      add_dependency d, available[d]
-                      next()
+                      add d, "#{cwd}/node_modules/#{d}/#{main}", next
                   else
-                    check_directory "#{process.cwd()}/dist", d, (loaded) =>
-                      if loaded
-                        add_dependency d, available[d]
-                        next()
+                    check "#{cwd}/dist", d, (loaded) => do_add d, next if loaded
           else
             next()
         , done
@@ -136,28 +124,30 @@
       finish_up: (resolve, args) =>
         if typeof @post_initialize == 'function'
           @do_wrap 'post_initialize'
-          @post_initialize(args)
+          @post_initialize args
             .then =>
-              available[classes[@clazz]] = @
+              @make_available @clazz, @
               resolve @
         else
-          available[classes[@clazz]] = @
+          @make_available @clazz, @
           resolve @
 
-      initialize: (args = { }, wrap = true) =>
+      initialize: (args = { }) =>
         deferred = q.defer()
 
-        if initialized[@clazz] == false
+        @clazz = @constructor.name unless @clazz?
+
+        if initialized[@clazz] != true
           initialized[@clazz] = true
 
-          @wrap_methods() if wrap
+          @wrap_methods()
 
           if @deps?
             @hydrate @deps, => @finish_up deferred.resolve, args
           else
             @finish_up deferred.resolve, args
         else
-          process.nextTick => deferred.resolve available[classes[@clazz]]
+          process.nextTick => deferred.resolve available[@strip @clazz]
 
         deferred.promise
 
