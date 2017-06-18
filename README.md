@@ -39,11 +39,11 @@ class Caller extends Module {
 
 There are several benefits to `Madul`:
 
-1. _maduls are highly testable_ - dependency loading and initialization are handled by `Madul`. Dependencies are attached to a madul as properties, making them very easy to swap out for testing.
-2. _async dependency support_ - `require` only works synchronously and AMD adds a lot of boilerplate. `Madul` supports both sync and async depencnedy loading via a single, boilerplateless mechanism (specifying dependencies as an array of strings to the `deps` property).
-3. _simple, unobtrusive async behavior_ - `Madul` takes all the work out of making methods async. All methods that don't start with an underscore (`_`) are wrapped in a Promise (methods that start with a `$` are 'initializers' and executing during initialization). Async callbacks for success/completion, error/failure, and update/progress states are passed as the last three arguments to all wrapped methods.
-4. _logging made easy_ - `Madul` handles logging via [EventEmitter2](https://github.com/asyncly/EventEmitter2 "GitHub page") and events. More on that below ...
-5. _clean, understandable, fast code_ - All the pieces of `Madul` come together to produce code that is compact, easy-to-understand, fun to write, easy to test, easy to monitor, and performant as runtime.
+1. **maduls are highly testable** _Dependency loading and initialization are handled by `Madul`. Dependencies are attached to a madul as properties, making them very easy to swap out for testing._
+2. **async dependency support** _`require` only works synchronously and AMD adds a lot of boilerplate. `Madul` supports both sync and async depencnedy loading via a single, boilerplateless mechanism (specifying dependencies as an array of strings to the `deps` property)._
+3. **simple, unobtrusive async behavior** _`Madul` takes all the work out of making methods async. All methods that don't start with an underscore are wrapped in a Promise (methods that start with a `$` are 'initializers' and executing during initialization). Async callbacks for success/completion, error/failure, and update/progress states are passed as the last three arguments to all wrapped methods._
+4. **logging made easy** _`Madul` handles logging via [EventEmitter2](https://github.com/asyncly/EventEmitter2 "GitHub page") and events. More on that below ..._
+5. **clean, understandable, fast code** _All the pieces of `Madul` come together to produce code that is compact, easy-to-understand, fun to write, easy to test, easy to monitor, and performant as runtime._
 
 ## Logging
 
@@ -141,7 +141,7 @@ Dependencies are specified as an array of strings assigned to the `deps` propert
 
 Dependencies that live in the project are specified in exactly the same way as third party and core node dependencies. Dependencies that load sync and async are specified in exactly the same way - `Madul` figures out which is what and handles things appropriately.
 
-Once loaded, dependencies are added to the madul instance as properties. Any dashes in dependency names are converted to underscores (`_`).
+Once loaded, dependencies are added to the madul instance as properties. Any dashes in dependency names are converted to underscores.
 
 ### Example
 
