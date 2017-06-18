@@ -3,56 +3,119 @@
     q     = require 'q'
     fs    = require 'fs'
     async = require 'async'
+    uuid  = require 'uuid-1345'
 
     microtime = require 'microtime'
 
-    logger = require './logger'
+    EventEmitter2 = require('eventemitter2').EventEmitter2
+    emitter = new EventEmitter2 wildcard: true
 
     available   = { }
     initialized = { }
 
+    code_root = process.env.MADUL_ROOT || 'dist'
+
+    underscore = (value) -> value.replace /\W+/g, '_'
+
+    WRAPPED = { }
+
+    _INITIALIZERS = { }
+
+    INITIALIZERS = (cls, method) ->
+      _INITIALIZERS[cls] = [ ] unless _INITIALIZERS[cls]?
+
+      _INITIALIZERS[cls].push method
+
+    WRAP = (cls, method) ->
+      unless WRAPPED[cls]?
+        WRAPPED[cls] = [
+          'constructor'
+          'listen'
+          'fire'
+          'warn'
+          'report'
+          'do_wrap'
+          'wrap_methods'
+          'strip'
+          'make_available'
+          'hydrate'
+          'finish_up'
+          'initialize'
+        ]
+
+      WRAPPED[cls].indexOf(method) < 0
+
     class Madul
+
+      INITIALIZERS: [ ]
+
+      @LISTEN: (event, callback) => emitter.on event, callback
+
+      @FIRE: (event, args) => emitter.emit event, args
+
+      listen: (event, callback) => Madul.LISTEN "*.#{@clazz}.#{event}", callback
+
+      fire: (event, args) => Madul.FIRE "@.#{@clazz}.#{event}", args
+
+      warn: (event, details) => Madul.FIRE "!.#{@clazz}.#{event}", details
+
+      report: (method, state, id, args) =>
+        @fire "#{method}.#{state}",
+          uuid:      id
+          args:      args
+          timestamp: microtime.now()
 
       do_wrap: (method) =>
         callMe = @[method]
 
+        Madul.FIRE "$.#{@clazz}.#{method}.wrap"
+
         @["_#{method}"] = @[method]
 
+        respond = (id, deferred) =>
+          (state, data) =>
+            process.nextTick =>
+              deferred[state] data
+
+              @report method, state, id, data
+
+        WRAPPED[@clazz].push method
+
         @[method] = =>
-          deferred = q.defer()
-          start    = microtime.now()
-          update   = start
+          id   = uuid.v4fast()
+          def  = q.defer()
+          args = if arguments[0]? then Array.prototype.slice.call arguments else [ ]
+          res  = respond id, def
 
-          respond = (state, data) =>
-            deferred[state] data
+          args.push (out) => res 'resolve', out
+          args.push (err) => res 'reject',  err
+          args.push (out) => res 'notify',  out
 
-            if state == 'reject'
-              logger.rejected @clazz, method, microtime.now() - start, data
+          @report method, 'invoke', id, args
 
-            if process.env.MADUL_LOG_LEVEL > 4
-              if state == 'resolve'
-                logger.resolved @clazz, method, microtime.now() - start, data
-              else if state == 'notify'
-                logger.notify @clazz, method, microtime.now() - update, data
-                update = microtime.now()
+          @["_#{method}"].apply @, args
 
-          @done   = (out) => respond 'resolve', out
-          @fail   = (err) => respond 'reject',  err
-          @update = (out) => respond 'notify',  out
+          def.promise
 
-          args = Array.prototype.slice.call arguments
+      wrap_methods: =>
+        props = Object.keys @constructor.prototype
 
-          logger.trace "Invoking #{@clazz}.#{method}()", args
+        for prop in props
+          if prop[0] != '_'                      &&
+             typeof @[prop] == 'function'        &&
+             typeof @["_#{prop}"] == 'undefined' &&
+             WRAP(@clazz, prop) == true
 
-          @["_#{method}"].apply null, args
+            @do_wrap prop
 
-          deferred.promise
-
-      wrap_methods: => @pub?.forEach (method) => @do_wrap method
+            INITIALIZERS @clazz, prop if prop[0] == '$'
 
       strip: (name) => name.toLowerCase().replace /\W+/g, ''
 
-      make_available: (name, mod) => available[@strip name] = mod
+      make_available: (name, mod) =>
+        Madul.FIRE "$.#{name}.available"
+
+        available[@strip name] = mod
 
       hydrate: (deps, done) =>
         load = (name, path, loaded) =>
@@ -63,14 +126,16 @@
               .initialize @ctor_params?[name]
               .then (mod) =>
                 @make_available name, mod
-                loaded true
+                loaded()
           else
             @make_available name, mod
-            loaded true
+            loaded()
 
-        check = (path, dep, loaded) =>
+        check = (path, dep, finished) =>
           fs.readdir path, (err, files) =>
             if err?
+              Madul.FIRE '$.error', err
+
               done type: 'ERROR', info: err
             else
               async.each files, (f, next) =>
@@ -78,16 +143,16 @@
 
                 fs.stat depth, (e, s) =>
                   if s.isDirectory() && f[0] != '.'
-                    check depth, dep, => next()
+                    check depth, dep, next
                   else if s.isFile() && f.substring(0, f.length - 3) == dep
-                    load f.substring(0, f.length - 3), depth, => loaded true
+                    load f.substring(0, f.length - 3), depth, => do_add dep, next
                   else
                     next()
-              , => loaded true
+              , finished
 
         add_dependency = (name, mod) =>
-          n = name.replace /\W+/g, '_'
-          @[n] = mod
+          Madul.FIRE "$.#{@clazz}.dependency.register", name
+          @[underscore name] = mod
 
         do_add = (name, next) =>
           add_dependency name, available[@strip name]
@@ -97,8 +162,8 @@
           @make_available name, require resource
           do_add name, next
 
-        async.eachSeries deps, (d, next) =>
-          if @[d]? == false
+        async.each deps, (d, next) =>
+          if @[underscore d]? == false
             if available[@strip d]? == true
               do_add d, next
             else
@@ -112,32 +177,35 @@
                   if stat?.isFile()
                     fs.readFile pkg, 'utf8', (err, data) =>
                       json = JSON.parse data
-                      main = json.main || json._main
+                      main = json.main || json._main || 'index.js'
 
                       add d, "#{cwd}/node_modules/#{d}/#{main}", next
                   else
-                    check "#{cwd}/dist", d, (loaded) => do_add d, next if loaded
+                    check "#{cwd}/#{code_root}", d, next
           else
             next()
         , done
 
       finish_up: (resolve, args) =>
-        if typeof @post_initialize == 'function'
-          @do_wrap 'post_initialize'
-          @post_initialize args
-            .then =>
-              @make_available @clazz, @
-              resolve @
-        else
+        async.each _INITIALIZERS[@clazz], (initializer, next) =>
+          @[initializer] args
+            .then next
+        , =>
           @make_available @clazz, @
           resolve @
+          Madul.FIRE "$.#{@clazz}.initialized"
 
-      initialize: (args = { }) =>
+      initialize: =>
         deferred = q.defer()
+        args     = if arguments[0]? then Array.prototype.slice.call arguments else undefined
 
         @clazz = @constructor.name unless @clazz?
 
+        Madul.FIRE "$.#{@clazz}.request_instance", args
+
         if initialized[@clazz] != true
+          Madul.FIRE "$.#{@clazz}.initialize", args
+
           initialized[@clazz] = true
 
           @wrap_methods()
