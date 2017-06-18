@@ -79,7 +79,7 @@ The format for an event name is as follows:
 
 ### Examples
 
-Some example event names are:
+Some example event names (for a hypothetical DB madul) are:
 
 + `$.DB.request_instance`   _fired whenever `new DB().initialize()` is called_
 + `!.DB.connection.failure` _fired if the DB cannot be connected to_
