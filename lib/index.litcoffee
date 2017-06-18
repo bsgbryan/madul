@@ -132,7 +132,7 @@
         check = (path, dep, finished) =>
           fs.readdir path, (err, files) =>
             if err?
-              Madul.FIRE '$.error', err
+              @warn 'file-not-found', err
 
               done type: 'ERROR', info: err
             else
