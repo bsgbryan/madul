@@ -1,13 +1,14 @@
 {
   "name": "madul",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A simple tool that makes writing async code fun & easy",
   "files": [
     "dist"
   ],
   "main": "dist/index.js",
   "scripts": {
-    "prepublish": "gulp prepublish",
+    "prepublishOnly": "gulp prepublish",
+    "prepare": "gulp dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
