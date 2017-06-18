@@ -90,14 +90,16 @@ Some example event names (for a hypothetical DB madul) are:
 
 There are two global event API methods:
 
-1. `Madul.LISTEN(event_name, callback)` - _This static method allows you to specify any event you'd like to consome, across all maduls._
-2. `Madul.FIRE(event_name, args)` - _This is the static method used to actually fire events. It is not recommended to call this method directly. This method does not enfore any formatting rules for event names - meaning you may fire events that are not consumable as they do not follow the `Madul` event naming conventions._
+1. `Madul.LISTEN(event_name, callback)` - _This static method allows you to specify any event you'd like to consume, across all maduls._
+2. `Madul.FIRE(event_name, args)` - _This is the static method used to actually fire events. It is not recommended to call this method directly. This method does not enforce any formatting rules for event names - meaning you may fire events that are not consumable as they do not follow the `Madul` event naming conventions._
 
-Additionally, there are three instance level event API methods:
+Additionally, there are three instance level event API methods. The `event_name` you pass to these methods is appended to the `@.{Madul class name}.` that gets passed to `Madul.LISTEN`/`Madul.FIRE`.
 
 1. `listen(event_name, callback)` - _This method is a convenience wrapper limiting the scope of the `Madul.LISTEN` method to just your madul's events._
 2. `fire(event_name, args)` - _This method wraps `Madul.FIRE`, properly formatting the event name to specify it as a madul event type - this guarantees `listen` will work as expected._
 3. `warn(event_name, details)` - _This method fires a madul-level error event._
+
+**NOTE** Event names must me dot `.` delimited.
 
 #### Example
 
