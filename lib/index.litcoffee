@@ -47,8 +47,6 @@
 
     class Madul
 
-      INITIALIZERS: [ ]
-
       @LISTEN: (event, callback) => emitter.on event, callback
 
       @FIRE: (event, args) => emitter.emit event, args
