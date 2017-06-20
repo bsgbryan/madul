@@ -28,7 +28,7 @@ class Caller extends Module {
   }
 
   // All methods not starting with an underscore are wrapped, with
-  // state callbacks passed as the last arguments to all invokations
+  // state callbacks passed as the last arguments to all invocations
   maybe(person, done, fail) {
     const self = this
 
@@ -84,7 +84,7 @@ There are three distinct types of events Madul supports:
 
 + `$` = Internal events intended to be used by Madul for debugging. Madul lifecycle events (initialization, dependency registration, etc) are of this type.
 + `!` = Error events.
-+ `@` = Madul instance events. They are fired by Madul when a method is invoked and when state callback methods (success/completion, error/failure, update/progress) are executed. They are also the event type fired when a modul calls its `fire` method.
++ `@` = Madul instance events. They are fired by Madul when a method is invoked and when state callback methods (success/completion, error/failure, update/progress) are executed. They are also the event type fired when a madul calls its `fire` method.
 
 The format for an event name is as follows:
 
@@ -111,7 +111,7 @@ There are two global event API methods:
 Additionally, there are three instance level event API methods. The `event_name` you pass to these methods is appended to the `@.{Madul class name}.` that gets passed to `Madul.LISTEN`/`Madul.FIRE`.
 
 1. `listen(event_name, callback)` => This method is a convenience wrapper limiting the scope of the `Madul.LISTEN` method to just your maduls events.
-2. `fire(event_name, args)` => This method wraps `Madul.FIRE`, properly formatting the event name to specify it as a madul event type - guaranteeing `listen` will work as expected.
+2. `fire(event_name, args)` => This method wraps `Madul.FIRE`, properly formatting the event name to specify it as a madul-level event - guaranteeing `listen` will work as expected.
 3. `warn(event_name, details)` => This method fires a madul-level error event.
 
 **NOTE** Event names must me dot `.` delimited.
@@ -133,13 +133,13 @@ The following are all the built-in events:
 
 The `invoke`, `resolve`, `reject`, and `update` madul-level events all receive the following information:
 
-+ `uuid` A universally unique id for the method invocation
++ `uuid` A universally unique identifier for the method invocation
 + `args` The arguments passed to the method invocation/state callback
-+ `timesamp` A microsecond precision timestamp (represented as an integer) for when the event occured
++ `timestamp` A microsecond precision timestamp (represented as an integer) for when the event occured
 
 #### User created events
 
-You can create new madul level event types simply by passing dot-delimited strings to `fire`.
+You can create new madul-level event types simply by passing dot-delimited strings to `fire`.
 
 You can also create entirely new global event types by passing dot-delimited strings to `Madul.FIRE`. _Please be very careful when doing this._
 
@@ -153,7 +153,7 @@ import Madul from 'madul'
 class Example extends Madul {
   $setup_logging_for_everthing(done) {
     // This will send any event for Example to the console
-    this.listen('*', () => console.log(this.event, arguments))
+    this.listen('**', () => console.log(this.event, arguments))
 
     // Invoking state callbacks is not required, but it is good practice
     done()
@@ -210,7 +210,7 @@ class AllTheDeps extends Madul {
 
   // State callbacks can be called whatever makes the most sense
   foo(put_a_ring_on_it, play_cod) {
-    const self = this // Important to maintain context in async callbacks
+    const self = this // Important to maintain context in state callbacks
 
     self.fs.readFile('soul_mate.txt', 'utf8', (err, bae) => {
       if (self.single_ladies.include(bae)) {
@@ -223,7 +223,7 @@ class AllTheDeps extends Madul {
 
 ## Initialization in depth
 
-Calling `new` on a Madul class is not enough to get it into a usable state. Since constructors are synchronous Madul implements all its heavy listing in the `initialize` method.
+Calling `new` on a Madul class is not enough to get it into a usable state. Since constructors are synchronous Madul implements all its heavy lifting in the `initialize` method.
 
 You will never need to override the initialize method. `$` initializer methods exist specifically to save you from overriding `initialize`.
 
