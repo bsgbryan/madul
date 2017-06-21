@@ -64,12 +64,11 @@
           timestamp: microtime.now()
 
       do_wrap: (method) =>
-        proto  = @constructor.prototype
-        callMe = proto[method]
+        callMe = @[method]
 
         Madul.FIRE "$.#{@clazz}.#{method}.wrap"
 
-        proto["_#{method}"] = @[method]
+        @["_#{method}"] = @[method]
 
         respond = (id, deferred) =>
           (state, data) =>
@@ -80,7 +79,7 @@
 
         WRAPPED[@clazz].push method
 
-        proto[method] = =>
+        @[method] = =>
           id   = uuid.v4fast()
           def  = q.defer()
           args = if arguments[0]? then Array.prototype.slice.call arguments else [ ]
@@ -92,18 +91,17 @@
 
           @report method, 'invoke', id, args
 
-          proto["_#{method}"].apply @, args
+          @["_#{method}"].apply @, args
 
           def.promise
 
       wrap_methods: =>
         props = Object.keys @constructor.prototype
-        proto = @constructor.prototype
 
         for prop in props
-          if prop[0] != '_'                          &&
-             typeof proto[prop] == 'function'        &&
-             typeof proto["_#{prop}"] == 'undefined' &&
+          if prop[0] != '_'                      &&
+             typeof @[prop] == 'function'        &&
+             typeof @["_#{prop}"] == 'undefined' &&
              WRAP(@clazz, prop) == true
 
             @do_wrap prop
