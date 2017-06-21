@@ -2,6 +2,10 @@
 
 ## TL;DR
 
+### PLEASE NOTE
+
+Madul is written in and intended to be used in [CoffeeScript](http://coffeescript.org/).
+
 ### Installation
 
 ```
@@ -10,38 +14,29 @@ npm install --save madul
 
 ### Usage
 
-```js
+```coffeescript
 import Module from 'madul'
 
-class Caller extends Module {
+class Caller extends Module
 
-  // Can be core node modules, third party modules, or project files
-  deps = [ 'fs', 'dance', 'drink', 'phone' ]
+  # Can be core node modules, third party modules, or project files
+  deps: [ 'fs', 'dance', 'drink', 'phone' ]
 
-  // $ methods are all executed exactly once during madul initialization
-  $go_to_club(done) {
-    const self = this
+  # $ methods are all executed exactly once during madul initialization
+  $go_to_club: (done) ->
+    @dance()
+    .then => @drink()
+    .then done
 
-    self.dance()
-    .then(() => self.drink())
-    .then(done)
-  }
-
-  // All methods not starting with an underscore are wrapped, with
-  // state callbacks passed as the last arguments to all invocations
-  maybe(person, done, fail) {
-    const self = this
-
-    // Items in the deps array get assigned as instance properties
-    self.fs.readFile('contacts', 'utf8', (err, numbers) => {
-      if (numbers.split('\n').includes(person)) {
-        self.phone.dial(person).then(done)
-      } else {
-        fail("There's always next Friday ...")
-      }
-    })
-  }
-}
+  # All methods not starting with an underscore are wrapped, with
+  # state callbacks passed as the last arguments to all invocations
+  maybe: (person, done, fail) ->
+    # Items in the deps array get assigned as instance properties
+    @fs.readFile 'contacts', 'utf8', (err, numbers) =>
+      if numbers.split('\n').includes person
+        self.phone.dial(person).then done
+      else
+        fail "There's always next Friday ..."
 ```
 
 # What is madul?
@@ -68,12 +63,11 @@ Madul has no direct support for logging. Instead, Madul provides a simple mechan
 
 ### Example
 
-```js
+```coffeescript
 import Madul from 'madul'
 
-Madul.LISTEN('**', (...args_passed_to_FIRE) => {
-  console.log(this.event, args_passed_to_FIRE)
-})
+Madul.LISTEN '**', (...args_passed_to_FIRE) =>
+  console.log(@event, args_passed_to_FIRE)
 ```
 
 The above will log all events to the console.
@@ -147,38 +141,33 @@ You can also create entirely new global event types by passing dot-delimited str
 
 To configure a madul to log its events to the console you'd do the following:
 
-```js
+```coffeescript
 import Madul from 'madul'
 
-class Example extends Madul {
-  $setup_logging_for_everthing(done) {
-    // This will send any event for Example to the console
-    this.listen('**', () => console.log(this.event, arguments))
+class Example extends Madul
+  $setup_logging_for_everthing: (done) ->
+    # This will send any event for Example to the console
+    @listen '**', => console.log this.event, arguments
 
-    // Invoking state callbacks is not required, but it is good practice
+    # Invoking state callbacks is not required, but it is good practice
     done()
-  }
 
-  $setup_just_invocation_logging(done) {
-    // This will only send invoke events to the console
-    this.listen('*.invoke', (arg) => console.log(`${this.event}(${arg})`))
-    // Output would look like: @.Example.do_somthing.invoke(example arg)
-    // NOTE: This would not log resolve, reject, or update events
+  $setup_just_invocation_logging: (done) ->
+    # This will only send invoke events to the console
+    @listen '*.invoke', (arg) => console.log "#{this.event}(#{arg})"
+    # Output would look like: @.Example.do_somthing.invoke(example arg)
+    # NOTE: This would not log resolve, reject, or update events
 
     done()
-  }
 
-  do_somthing(arg, done, fail, update) {
-    // Do things
-    this.fire('did_something.awesome', arg)
+  do_somthing: (arg, done, fail, update) ->
+    # Do things
+    @fire 'did_something.awesome', arg
     done()
-  }
 
-  do_something_else(done, fail) {
-    // DO ALL THE THINGS
+  do_something_else: (done, fail) ->
+    # DO ALL THE THINGS
     done()
-  }
-}
 ```
 
 ## Dependencies
@@ -197,28 +186,21 @@ Keeping consistent with how `require` works dependencies are singlestons - each 
 
 Specifying and using dependencies is done as follows:
 
-```js
+```coffeescript
 import Madul from 'madul'
 
-class AllTheDeps extends Madul {
+class AllTheDeps extends Madul
 
-  deps = [
-    'fs',           // Core node module, loads sync
-    'uuid-1345',    // Third party module, loads sync
-    'single-ladies' // Project dependency - is a Madul, loads async
+  deps: [
+    'fs'            # Core node module, loads sync
+    'uuid-1345'     # Third party module, loads sync
+    'single-ladies' # Project dependency - is a Madul, loads async
   ]
 
-  // State callbacks can be called whatever makes the most sense
-  foo(put_a_ring_on_it, play_cod) {
-    const self = this // Important to maintain context in state callbacks
-
-    self.fs.readFile('soul_mate.txt', 'utf8', (err, bae) => {
-      if (self.single_ladies.include(bae)) {
-        put_a_ring_on_it(bae)
-      }
-    })
-  }
-}
+  # State callbacks can be called whatever makes the most sense
+  foo: (put_a_ring_on_it, play_cod) ->
+    @fs.readFile('soul_mate.txt', 'utf8', (err, bae) =>
+      put_a_ring_on_it bae if @single_ladies.include bae
 ```
 
 ## Initialization in depth
@@ -229,15 +211,15 @@ You will never need to override the initialize method. `$` initializer methods e
 
 The steps to get a usable madul are detailed below:
 
-```js
+```coffeescript
 import Example from './example'
 
-new Example()                // 1
-  .initialize()              // 2
-  .then(madul => {           // 3
-    madul.execute_behavior() // 4
-      .then((output) => /* Do something else */)
-  })
+new Example()                # 1
+  .initialize()              # 2
+  .then (madul) =>           # 3
+    madul.execute_behavior() # 4
+      .then (output) =>
+        # Do something else
 ```
 
 1. Madul constructors works just like any other constructor
