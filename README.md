@@ -160,7 +160,7 @@ class Example extends Madul
 
     done()
 
-  do_somthing: (arg, done, fail, update) ->
+  do_something: (arg, done, fail, update) ->
     # Do things
     @fire 'did_something.awesome', arg
     done()
@@ -216,9 +216,9 @@ import Example from './example'
 
 new Example()                # 1
   .initialize()              # 2
-  .then (madul) =>           # 3
+  .then (madul) ->           # 3
     madul.execute_behavior() # 4
-      .then (output) =>
+      .then (output) ->
         # Do something else
 ```
 
