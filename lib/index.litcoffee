@@ -98,39 +98,28 @@
         id  = uuid.v4fast()
         res = proto._respond proto, method, id, def
 
-        input.done   = (out) => res 'resolve', out
-        input.fail   = (err) => res 'reject',  err
-        input.update = (out) => res 'notify',  out
+        if Array.isArray input
+          input.push (out) => res 'resolve', out
+          input.push (err) => res 'reject',  err
+          input.push (out) => res 'notify',  out
+        else if typeof input == 'object'
+          input.done   = (out) => res 'resolve', out
+          input.fail   = (err) => res 'reject',  err
+          input.update = (out) => res 'notify',  out
+
+          input = [ input ]
+        else
+          msg = "input to #{proto.constructor.name}.#{method} must be an Array of Object"
+          @warn 'input.invalid', msg
+          throw new Error msg
 
         proto._report proto.constructor.name, method, 'invoke', id, input
 
         input
 
-      _result: (results) =>
-        succeeded = true
-        reason    = undefined
-
-        modifiers = for result in results
-          if result.state != 'fulfilled'
-            succeeded = false
-            reason result.reason
-          else
-            result.value
-
-        out = succeeded: succeeded
-
-        if succeeded
-          out.modifiers = modifiers
-        else
-          out.reason = reason
-
-        out
-
       _do_wrap: (proto, method) =>
         if method != 'fire' && method != 'warn' && method != 'listen'
           Madul.FIRE "$.#{proto.constructor.name}.#{method}.wrap"
-
-          console.log method, 'is a', typeof proto[method]
 
           if typeof proto[method] == 'function'
             proto["_#{method}"] = proto[method]
@@ -143,72 +132,66 @@
 
               def.promise
           else if typeof proto[method] == 'object'
-            decs = for own key, val of proto[method].validate
-              val
+
+            if Array.isArray proto[method].validate
+              args_format = 'ARRAY'
+              decs        = for val in proto[method].validate
+                val
+            else if typeof proto[method].validate == 'object'
+              args_format = 'OBJECT'
+              decs        = for own key, val of proto[method].validate
+                val
+            else if typeof proto[method].validate == 'string'
+              args_format = 'ARRAY'
+              decs        = [ proto[method].validate ]
+            else if typeof proto[method].validate != 'undefined'
+              @warn 'meta.invalid', validate: 'must be a String, Object, or Array'
+              return
+            else
+              args_format = 'ARRAY'
+              decs        = [ ]
 
             decs = decs.concat(proto[method].before) if proto[method].before?
             decs = decs.concat(proto[method].after)  if proto[method].after?
 
-            console.log 'decorators', decs
-
             @_do_hydrate proto, decs, =>
               proto["_#{method}"] = proto[method]
 
-              call_result = { }
-
-              rejected = (results) =>
-                output = @_result results
-
-                if output.succeeded == false
-                  def.reject output.reason
-
-                output.succeeded == false
+              out = undefined
 
               proto[method] = =>
                 def = q.defer()
                 me  = proto["_#{method}"]
 
-                args = if arguments[0]? then arguments else { }
+                if args_format == 'ARRAY'
+                  args = Array.prototype.slice.call arguments
 
-                me.validate = { } unless me.validate?
-                me.before   = [ ] unless me.before?
-                me.after    = [ ] unless me.after?
+                  if me.validate?
+                    validators = for val, i in me.validate
+                      proto[val].EXECUTE args[i]
+                else if args_format == 'OBJECT'
+                  args = arguments[0]
 
-                validators = for own key, val of me.validate
-                  proto[val].EXECUTE args[key]
+                  if me.validate?
+                    validators = for own key, val of me.validate
+                      proto[val].EXECUTE args[key]
+                else
+                  @warn 'cannot-continue', 'No arg format specified'
+
+                  return def.reject 'No arg format specified'
+
+                me.before = [ ] unless me.before?
+                me.after  = [ ] unless me.after?
 
                 q.all validators
-                .then (results) =>
-                  return if rejected results
-
-                  q.all me.before.map (b) => proto[b].before args
-                .then (results) =>
-                  return if rejected results
-
-                  output = @_result results
-                  input  = @_prep_invocation method, args, def
-
-                  if output.modifiers.length > 0
-                    for mod in output.modifiers
-                      for key, val of mod
-                        input[key] = val
-
-                  me.behavior.apply @, input
+                .then => q.all me.before.map (b) => proto[b].before args
+                .then =>
+                  me.behavior.apply @, @_prep_invocation proto, method, args, def
                 .then (result) =>
-                  call_result = result
-
-                  q.all me.after.map (b) => b.after result
-                .then (results) =>
-                  return if rejected results
-
-                  output = @_result results
-
-                  if output.modifiers.length > 0
-                    for mod in output.modifiers
-                      for key, val of mod
-                        call_result[key] = val
-
-                  def.resolve call_result
+                  out = result
+                  q.all me.after.map (b) => b.after out
+                .then          => def.resolve out
+                .catch   (err) => def.reject  err
 
                 def.promise
           else
