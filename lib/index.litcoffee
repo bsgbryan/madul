@@ -239,20 +239,34 @@
             next()
         , done
 
-      _load: (me, name, path, loaded) =>
-        mod = require path
+      _init_if_madul: (path, initer, callback) =>
+        mod      = require path
+        proto    = mod
+        is_madul = false
 
-        if typeof mod == 'function'
-          new mod name
-            .initialize @ctor_params?[name]
+        while proto
+          is_madul = true if proto.constructor.name == 'Madul'
+
+          proto = proto.__super__
+
+        if is_madul
+          new mod()
+            .initialize()
             .then (mod) =>
-              me._make_available name, mod
-              loaded()
+              if initer?
+                mod[initer]()
+                  .then => callback mod
+              else
+                callback mod
         else
+          callback mod
+
+      _load: (me, name, initer, path, loaded) =>
+        me._init_if_madul path, initer, (mod) =>
           me._make_available name, mod
           loaded()
 
-      _check: (me, path, dep, finished) =>
+      _check: (me, path, dep, ref, initer, finished) =>
         fs.readdir path, (err, files) =>
           if err?
             me.warn 'file-not-found', err
@@ -264,9 +278,9 @@
 
               fs.stat depth, (e, s) =>
                 if s.isDirectory() && f[0] != '.'
-                  me._check me, depth, dep, next
+                  me._check me, depth, dep, ref, initer, next
                 else if s.isFile() && f.substring(0, f.length - 3) == dep
-                  me._load me, f.substring(0, f.length - 3), depth, => me._do_add me, dep, next
+                  me._load me, ref, initer, depth, => me._do_add me, dep, ref, next
                 else
                   next()
             , finished
@@ -276,22 +290,40 @@
 
         me[underscore name] = mod
 
-      _do_add: (me, name, next) =>
-        me._add_dependency me, name, available[strip name]
+      _do_add: (me, name, ref, next) =>
+        me._add_dependency me, ref, available[strip name]
         next()
 
-      _add: (me, name, resource, next) =>
-        me._make_available name, require resource
-        me._do_add me, name, next
+      _add: (me, name, ref, initer, path, next) =>
+        me._init_if_madul path, initer, (mod) =>
+          me._make_available name, mod
+          me._do_add me, name, ref, next
 
       _do_hydrate: (proto, deps, callback) =>
         async.each deps, (d, next) =>
-          if proto[underscore d]? == false
-            if available[strip d]? == true
-              proto._do_add proto, d, next
+          name, alias, initer = undefined
+          tokens = d.split '->'
+
+          if tokens.length == 2
+            alias = tokens[0]
+            t     = tokens[1].split '::'
+
+            if t.length == 2
+              name   = t[0]
+              initer = t[1]
+            else
+              name = t[0]
+          else
+            name = alias = tokens[0]
+
+          ref = alias || name
+
+          if proto[underscore ref]? == false
+            if available[strip name]? == true
+              proto._do_add proto, name, ref, next
             else
               try
-                proto._add proto, d, d, next
+                proto._add proto, name, ref, initer, d, next
               catch e
                 cwd = process.cwd()
                 pkg = "#{cwd}/node_modules/#{d}/package.json"
@@ -301,10 +333,11 @@
                     fs.readFile pkg, 'utf8', (err, data) =>
                       json = JSON.parse data
                       main = json.main || json._main || 'index.js'
+                      path = "#{cwd}/node_modules/#{d}/#{main}"
 
-                      proto._add proto, d, "#{cwd}/node_modules/#{d}/#{main}", next
+                      proto._add proto, name, ref, initer, path, next
                   else
-                    proto._check proto, "#{cwd}/#{code_root}", d, next
+                    proto._check proto, "#{cwd}/#{code_root}", d, ref, initer next
           else
             next()
         , callback
