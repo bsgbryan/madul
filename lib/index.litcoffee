@@ -12,13 +12,13 @@
     initialized = { }
     listeners   = { }
 
-    code_root = process.env.MADUL_ROOT || 'dist'
+    code_root = process.env.SEARCH_ROOT || 'dist'
 
     underscore = (value) -> value.replace /\W+/g, '_'
     strip      = (name)  -> name.toLowerCase().replace /\W+/g, ''
 
-    WRAPPED = { }
-
+    SEARCH_ROOTS  = { }
+    WRAPPED       = { }
     _INITIALIZERS = { }
 
     INITIALIZERS = (cls, method) ->
@@ -71,6 +71,11 @@
       @LISTEN: (event, callback) => emitter.on event, callback
 
       @FIRE: (event, args) => emitter.emit event, args
+
+      @SEARCH_ROOT: (mod, path) =>
+        Madul.FIRE '$.Madul.search_root.register', "#{mod}": path
+
+        SEARCH_ROOTS[mod] = path.substring 0, path.lastIndexOf '/'
 
       listen: (event, callback) ->
         Madul.LISTEN "*.#{@constructor.name}.#{event}", callback
@@ -136,14 +141,18 @@
             if Array.isArray proto[method].validate
               args_format = 'ARRAY'
               decs        = for val in proto[method].validate
-                val
+                @_parse_handle(val).ref
+
+              proto[method].validate = decs
             else if typeof proto[method].validate == 'object'
               args_format = 'OBJECT'
               decs        = for own key, val of proto[method].validate
-                val
+                { ref } = @_parse_handle val
+                proto[method].validate[key] = ref
+                ref
             else if typeof proto[method].validate == 'string'
               args_format = 'ARRAY'
-              decs        = [ proto[method].validate ]
+              decs        = [ @_parse_handle(proto[method].validate).ref ]
             else if typeof proto[method].validate != 'undefined'
               @warn 'meta.invalid', validate: 'must be a String, Object, or Array'
               return
@@ -151,13 +160,22 @@
               args_format = 'ARRAY'
               decs        = [ ]
 
-            decs = decs.concat(proto[method].before) if proto[method].before?
-            decs = decs.concat(proto[method].after)  if proto[method].after?
+            decs = decs.concat(proto[method].before.map (b, i) =>
+              { ref } = @_parse_handle b
+              proto[method].before[i] = ref
+              ref
+            ) if proto[method].before?
+
+            decs = decs.concat(proto[method].after.map (a, i) =>
+              { ref } = @_parse_handle a
+              proto[method].after[i] = ref
+              ref
+            ) if proto[method].after?
+
+            Madul.FIRE '$.Madul.decorators.hydrate', decs
 
             @_do_hydrate proto, decs, =>
               proto["_#{method}"] = proto[method]
-
-              out = undefined
 
               proto[method] = =>
                 def = q.defer()
@@ -168,13 +186,17 @@
 
                   if me.validate?
                     validators = for val, i in me.validate
-                      proto[val].EXECUTE args[i]
+                      { ref } = @_parse_handle val
+                      Madul.FIRE '$.Madul.validator.execute', "#{ref}": args[i]
+                      proto[ref].EXECUTE args[i]
                 else if args_format == 'OBJECT'
                   args = arguments[0]
 
                   if me.validate?
                     validators = for own key, val of me.validate
-                      proto[val].EXECUTE args[key]
+                      { ref } = @_parse_handle val
+                      Madul.FIRE '$.Madul.validator.execute', "#{ref}": args[key]
+                      proto[ref].EXECUTE args[key]
                 else
                   @warn 'cannot-continue', 'No arg format specified'
 
@@ -184,14 +206,25 @@
                 me.after  = [ ] unless me.after?
 
                 q.all validators
-                .then => q.all me.before.map (b) => proto[b].before args
+                .then =>
+                  q.all me.before.map (b) =>
+                    Madul.FIRE '$.Madul.before_filter.execute', "#{b}": args
+                    proto[b].before args
                 .then =>
                   me.behavior.apply @, @_prep_invocation proto, method, args, def
                 .then (result) =>
-                  out = result
-                  q.all me.after.map (b) => b.after out
-                .then          => def.resolve out
-                .catch   (err) => def.reject  err
+                  if me.after.length > 0
+                    q.all me.after.map (b) =>
+                      Madul.FIRE '$.Madul.after_filter.execute', "#{b}": result
+                      b.after result
+                  else
+                    d = q.defer()
+
+                    process.nextTick => d.resolve result
+
+                    d.promise
+                .then  (out) => def.resolve out
+                .catch (err) => def.reject  err
 
                 def.promise
           else
@@ -204,18 +237,15 @@
         name  = proto.constructor.name
 
         while proto? && Object.keys(proto).length > 0 && WRAPPED[name]? == false
-          for method, body of proto
-            if method[0]                  != '_'         &&
-               (
-                typeof body.behavior       == 'function' ||
-                typeof body                == 'function'
-               ) &&
-               typeof proto["_#{method}"] == 'undefined' &&
-               WRAP(name, method)         == true
+          for prop, body of proto
+            if prop[0]                  != '_'         &&
+               typeof proto["_#{prop}"] == 'undefined' &&
+               WRAP(name, prop)         == true
 
-              proto._do_wrap proto, method
+              if typeof body == 'function' || typeof body.behavior == 'function'
+                proto._do_wrap proto, prop
 
-              INITIALIZERS name, method if method[0] == '$'
+                INITIALIZERS name, prop if prop[0] == '$'
 
           proto = proto.__proto__
 
@@ -239,7 +269,7 @@
             next()
         , done
 
-      _init_if_madul: (path, initer, callback) =>
+      _init_if_madul: (path, callback) =>
         mod      = require path
         proto    = mod
         is_madul = false
@@ -252,21 +282,16 @@
         if is_madul
           new mod()
             .initialize()
-            .then (mod) =>
-              if initer?
-                mod[initer]()
-                  .then => callback mod
-              else
-                callback mod
+            .then callback
         else
           callback mod
 
-      _load: (me, name, initer, path, loaded) =>
-        me._init_if_madul path, initer, (mod) =>
+      _load: (me, name, path, loaded) =>
+        me._init_if_madul path, (mod) =>
           me._make_available name, mod
-          loaded()
+          loaded mod
 
-      _check: (me, path, dep, ref, initer, finished) =>
+      _check: (me, path, dep, ref, finished) =>
         fs.readdir path, (err, files) =>
           if err?
             me.warn 'file-not-found', err
@@ -278,69 +303,127 @@
 
               fs.stat depth, (e, s) =>
                 if s.isDirectory() && f[0] != '.'
-                  me._check me, depth, dep, ref, initer, next
+                  me._check me, depth, dep, ref, next
                 else if s.isFile() && f.substring(0, f.length - 3) == dep
-                  me._load me, ref, initer, depth, => me._do_add me, dep, ref, next
+                  me._load me, ref, depth, (mod) => me._do_add me, mod, ref, next
                 else
                   next()
             , finished
 
-      _add_dependency: (me, name, mod) =>
-        Madul.FIRE "$.#{me.constructor.name}.dependency.register", name
+      _do_add: (me, mod, ref, next) =>
+        Madul.FIRE "$.#{me.constructor.name}.dependency.register", ref
 
-        me[underscore name] = mod
+        me[underscore ref] = mod
 
-      _do_add: (me, name, ref, next) =>
-        me._add_dependency me, ref, available[strip name]
         next()
 
-      _add: (me, name, ref, initer, path, next) =>
-        me._init_if_madul path, initer, (mod) =>
-          me._make_available name, mod
-          me._do_add me, name, ref, next
+      _add: (me, ref, path, next) =>
+        me._init_if_madul path, (mod) =>
+          me._make_available ref, mod
+          me._do_add me, mod, ref, next
 
-      _do_hydrate: (proto, deps, callback) =>
-        async.each deps, (d, next) =>
-          name, alias, initer = undefined
-          tokens = d.split '->'
+      _parse_handle: (value) =>
+        tokens = value.split '='
 
-          if tokens.length == 2
-            alias = tokens[0]
-            t     = tokens[1].split '::'
+        if tokens.length == 2
+          initer = tokens[1].trim()
+          t      = tokens[0].split '->'
 
-            if t.length == 2
-              name   = t[0]
-              initer = t[1]
-            else
-              name = t[0]
+          if t[0].indexOf('#') > -1
+            r = t[0].split '#'
+
+            root = SEARCH_ROOTS[r[0].trim()]
+            t[0] = r[1]
+
+          if t.length == 2
+            name  = t[0].trim()
+            alias = t[1].trim()
+          else if t.length == 1
+            name = alias = t[0].trim()
           else
-            name = alias = tokens[0]
+            return next @warn 'alias.invalid', tokens[1]
 
-          ref = alias || name
+          toks = initer.split ':'
+
+          if toks.length == 2
+            initer = toks[0].trim()
+            pres   = toks[1].split(',').map (p) => p.trim()
+          else if toks.length == 1
+            initer = toks[0].trim()
+          else
+            return next @warn 'dependency-initializer.invalid', tokens[1]
+
+        else if tokens.length == 1
+          t = tokens[0].split '->'
+
+          if t[0].indexOf('#') > -1
+            r = t[0].split '#'
+
+            root = SEARCH_ROOTS[r[0].trim()]
+            t[0] = r[1]
+
+          if t.length == 2
+            name  = t[0].trim()
+            alias = t[1].trim()
+          else if t.length == 1
+            name = alias = t[0].trim()
+          else
+            return next @warn 'alias.invalid', tokens[1]
+
+        else
+          return next @warn 'dependency.invalid', d
+
+        { ref: alias || name, alias, name, root, initer, pres }
+
+      _do_hydrate: (proto, deps, hydration_complete) =>
+        initers = [ ]
+
+        async.each deps, (d, next) =>
+          { ref, alias, name, root, initer, pres } = @_parse_handle d
+
+          if pres?
+            insert_at = for p in pres
+              index_for = (sibling) => sibling.alias == p.alias
+
+              initers.find index_for
+
+            insert_at.sort()
+
+            insert_at = if insert_at.length == 0 then 0 else insert_at[insert_at.length - 1]
+
+            initers.splice insert_at, 0, alias: alias, execute: initer
 
           if proto[underscore ref]? == false
-            if available[strip name]? == true
-              proto._do_add proto, name, ref, next
+            if available[strip ref]? == true
+              proto._do_add proto, available[strip ref], ref, next
             else
               try
-                proto._add proto, name, ref, initer, d, next
+                proto._add proto, ref, name, next
               catch e
-                cwd = process.cwd()
-                pkg = "#{cwd}/node_modules/#{d}/package.json"
+                if root?
+                  Madul.FIRE '$.Madul.search_root.load', { name, alias, root }
 
-                fs.stat pkg, (err, stat) =>
-                  if stat?.isFile()
-                    fs.readFile pkg, 'utf8', (err, data) =>
-                      json = JSON.parse data
-                      main = json.main || json._main || 'index.js'
-                      path = "#{cwd}/node_modules/#{d}/#{main}"
+                  proto._check proto, root, name, ref, next
+                else
+                  cwd = process.cwd()
+                  pkg = "#{cwd}/node_modules/#{name}/package.json"
 
-                      proto._add proto, name, ref, initer, path, next
-                  else
-                    proto._check proto, "#{cwd}/#{code_root}", d, ref, initer next
+                  fs.stat pkg, (err, stat) =>
+                    if stat?.isFile()
+                      fs.readFile pkg, 'utf8', (err, data) =>
+                        json = JSON.parse data
+                        main = json.main || json._main || 'index.js'
+                        path = "#{cwd}/node_modules/#{name}/#{main}"
+
+                        proto._add proto, ref, path, next
+                    else
+                      proto._check proto, "#{cwd}/#{code_root}", name, ref, next
           else
             next()
-        , callback
+        , =>
+          async.eachSeries initers, (initer, next) =>
+            @[initer.execute]().then next
+          , hydration_complete
 
       _finish_up: (proto, args) =>
         name = proto.constructor.name
