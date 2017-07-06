@@ -305,9 +305,14 @@
         is_madul = false
 
         while proto
-          is_madul = true if proto.constructor.name == 'Madul'
-
-          proto = proto.__super__
+          is_madul = true if proto.name == 'Madul'
+          if is_madul                            == false      &&
+             proto.constructor.name              != 'Object'   &&
+             typeof proto                        == 'function' &&
+             typeof proto.__super__?.constructor == 'function'
+            proto = proto.__super__.constructor
+          else
+            proto = undefined
 
         if is_madul
           new mod()
