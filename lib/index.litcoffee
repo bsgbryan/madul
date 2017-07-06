@@ -457,7 +457,7 @@
             next()
         , =>
           async.eachSeries initers, (initer, next) =>
-            @[initer.execute]().then next
+            proto[initer.execute].apply(@).then next
           , hydration_complete
 
       _finish_up: (proto, args) =>
@@ -482,7 +482,7 @@
         if _INITIALIZERS[name]?
           async.each _INITIALIZERS[name], (initializer, next) =>
             if initializer.called == false
-              @[initializer.fn]()
+              proto[initializer.fn].apply @
                 .then =>
                   initializer.called = true
                   next()
