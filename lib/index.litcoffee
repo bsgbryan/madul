@@ -504,8 +504,7 @@
           initialized[name] = false
           listeners[name]   = [ deferred.resolve ]
 
-          @_wrap_methods()
-          @_hydrate_deps => @_invoke_parent_initializers => @_finish_up proto
+          @_hydrate_deps proto, => @_wrap_methods proto, => @_finish_up proto
         else if initialized[name] == false
           listeners[name].push deferred.resolve
         else if initialized[name] == true
