@@ -463,14 +463,13 @@
       _finish_up: (proto, args) =>
         name = proto.constructor.name
 
-        @_call_initializers_for name, =>
-          if listeners[name]?
-            async.each listeners[name], (listener, next) =>
-              listener @
-              next()
-            , => @_register_initialized name
-          else
-            @_register_initialized name
+        if listeners[name]?
+          async.each listeners[name], (listener, next) =>
+            listener @
+            next()
+          , => @_register_initialized name
+        else
+          @_register_initialized name
 
       _register_initialized: (name) =>
         @_make_available name, @
