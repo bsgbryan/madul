@@ -20,6 +20,9 @@
     SEARCH_ROOTS  = { }
     WRAPPED       = { }
     _INITIALIZERS = { }
+    HYDRATED      = { }
+
+    HYRDATION_LISTENERS = { }
 
     INITIALIZERS = (cls, method) ->
       _INITIALIZERS[cls] = [ ] unless _INITIALIZERS[cls]?
@@ -262,9 +265,23 @@
           while proto.__proto__? && Object.keys(proto.__proto__).length > 0
             protos.push proto = proto.__proto__
 
-        async.each protos, (p, next) =>
-          if p.deps?
-            p._do_hydrate p, p.deps, next
+        async.each protos.reverse(), (p, next) =>
+          name = p.constructor.name
+
+          if p.hasOwnProperty 'deps'
+            if HYDRATED[name] == undefined
+              HYDRATED[name]            = false
+              HYRDATION_LISTENERS[name] = [ next ]
+
+              p._do_hydrate p, p.deps, =>
+                HYDRATED[name] = true
+
+                for listener in HYRDATION_LISTENERS[name]
+                  listener()
+            else if HYDRATED[name] == false
+              HYRDATION_LISTENERS[name].push next
+            else if HYDRATED[name] == true
+              next()
           else
             next()
         , done
