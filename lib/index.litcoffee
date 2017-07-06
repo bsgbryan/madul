@@ -235,22 +235,35 @@
 
           WRAPPED[proto.constructor.name].push method
 
-      _wrap_methods: =>
-        proto = @.__proto__
-        name  = proto.constructor.name
+      _wrap_methods: (proto, callback) =>
+        name    = proto.constructor.name
+        to_wrap = [ ]
 
         while proto? && Object.keys(proto).length > 0 && WRAPPED[name]? == false
-          for prop, body of proto
+          to_wrap.push { proto, name, methods: [ ] }
+
+          for own prop, body of proto
             if prop[0]                  != '_'         &&
                typeof proto["_#{prop}"] == 'undefined' &&
                WRAP(name, prop)         == true
 
-              if typeof body == 'function' || typeof body.behavior == 'function'
-                proto._do_wrap proto, prop
+              continue if proto.deps? && proto.deps.indexOf(prop.replace(/_/g, '-')) > -1
 
-                INITIALIZERS name, prop if prop[0] == '$'
+              if typeof body == 'function' || typeof body?.behavior == 'function'
+                to_wrap[to_wrap.length - 1].methods.push prop
 
           proto = proto.__proto__
+          name  = proto.constructor.name
+
+        async.each to_wrap.reverse(), (wrap, completed) =>
+          async.each wrap.methods, (method, next) =>
+            wrap.proto._do_wrap wrap.proto, method
+
+            INITIALIZERS wrap.name, method if method[0] == '$'
+
+            next()
+          , => @_call_initializers_for wrap.proto, wrap.name, completed
+        , callback
 
       _make_available: (name, mod) =>
         Madul.FIRE "$.#{name}.available"
