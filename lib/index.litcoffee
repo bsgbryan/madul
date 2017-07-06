@@ -491,19 +491,6 @@
         else
           callback()
 
-      _invoke_parent_initializers: (callback) =>
-        proto = @.__proto__
-
-        if proto.__proto__?
-          parents = while proto.__proto__? && Object.keys(proto.__proto__).length > 0
-            proto = proto.__proto__
-
-          async.each parents, (parent, next) =>
-            @_call_initializers_for parent.constructor.name, next
-          , callback
-        else
-          callback()
-
       initialize: =>
         deferred = q.defer()
         proto    = @.__proto__
