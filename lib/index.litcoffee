@@ -270,8 +270,7 @@
 
         available[strip name] = mod
 
-      _hydrate_deps: (done) =>
-        proto  = @.__proto__
+      _hydrate_deps: (proto, done) =>
         protos = [ proto ]
 
         if proto.__proto__?
@@ -478,7 +477,7 @@
 
         Madul.FIRE "$.#{name}.initialized"
 
-      _call_initializers_for: (name, callback) =>
+      _call_initializers_for: (proto, name, callback) =>
         if _INITIALIZERS[name]?
           async.each _INITIALIZERS[name], (initializer, next) =>
             if initializer.called == false
