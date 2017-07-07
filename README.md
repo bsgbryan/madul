@@ -172,36 +172,130 @@ class Example extends Madul
 
 ## Dependencies
 
-Dependencies are specified as an array of strings assigned to the `deps` property.
+There's a bit to go over when it comes to dependencies.
 
-Dependencies are loaded in parallel.
+Dependencies are specified using strings formatted to a spec: the `dependency_spec`. A `dependency_spec` has several properties:
 
-Dependencies that live in the project are specified in exactly the same way as third party and core node dependencies. Dependencies that load sync and async are specified in exactly the same way - Madul figures out which is what and handles things appropriately.
+* `search_root` Specifies the root of the file path to search when loading a dependency.
+* `name` The actual name of the dependency. For a core node module or thrid party module it's the argument passed to `require`.
+* `alias` A more convenient/meaningful way to refer to a dependency.
+* `initializer` The method to execute when the dependency has been hydrated.
+* `prerequisites` A list of other dependencies that must be hydrated and initialized before executing a dependency's `initializer`.
 
-Once loaded, dependencies are added to the madul instance as properties. Any dashes in dependency names are converted to underscores.
+Aside from `name` all spec properties are optional.
 
-Keeping consistent with how `require` works dependencies are singlestons - each dependency is loaded exactly once. That instance is then given to all maduls that specify the dependency.
+An example of a `dependency_spec` with all properties would look like this: `example#dependency -> dep = configure:other_dep,even_more`.
 
-### Example
+Let's step through each property.
 
-Specifying and using dependencies is done as follows:
+### `search_root`
+
+The `search_root` precedes the `#` symbol in the example above. Maduls specify a search root to make loading files other than `index.js` ro whatever is specified as `main` in `package.json` easy.
+
+A Madul specifies a search root like so (_in `index.js`_):
 
 ```coffeescript
-import Madul from 'madul'
+Madul = require 'madul'
 
-class AllTheDeps extends Madul
+Madul.SEARCH_ROOT 'example', require.resolve '.'
 
-  deps: [
-    'fs'            # Core node module, loads sync
-    'uuid-1345'     # Third party module, loads sync
-    'single-ladies' # Project dependency - is a Madul, loads async
-  ]
+class Example extends Madul
 
-  # State callbacks can be called whatever makes the most sense
-  foo: (put_a_ring_on_it, play_cod) ->
-    @fs.readFile('soul_mate.txt', 'utf8', (err, bae) =>
-      put_a_ring_on_it bae if @single_ladies.include bae
+  # Madul deps and methods
+
+module.exports = Example
 ```
+
+Then, alongside `Example`, if there were a file named `something_cool.js` with the following contents:
+
+```coffeescript
+Madul = require 'madul'
+
+class SomethingCool extends Madul
+
+  # Madul deps and methods
+
+module.exports = SomethingCool
+```
+
+Another Madul would then specify it's dependency on `SomethingCool` as follows:
+
+```coffeescript
+Madul = require 'madul'
+
+class Foo extends Madul
+
+  deps: [ 'fs', 'path', 'example#something_cool' ]
+
+  # Madul methods
+
+module.exports = Foo
+```
+
+Dependencies are hydrated by recursively searching all files and folders in a search root - so you can structure you're Maduls however you'd like. To load them, client code only needs to know the file name of the Madul they actually want to load.
+
+### `alias`
+
+An alias is a more convenient/meaningful way to refer to a dependency. If an `alias` is specified, it is the only way to refer to the dependency in code.
+
+```coffeescript
+Madul = require 'madul'
+
+class Foo extends Madul
+
+  deps: [ 'example -> ex' ]
+
+  do_something: (done) ->
+    @ex.foo() # Cannot use example for this dep, since it was given an alias
+      .then done
+
+module.exports = Foo
+```
+
+### `initializer`
+
+A dependency `initializer` in a `dependency_spec` specifies the method on the dependant Madul to be invoked when the dependency has been hydrated.
+
+```coffeescript
+Madul = require 'madul'
+
+class Bar extends Madul
+
+  deps: [ 'example = configure' ]
+
+  configure: (done) ->
+    # Gets called automatically after example has been hydrated
+
+module.exports = Bar
+```
+
+A dependency `initializer` is just a plain old Madul method.
+
+### `prerequisites`
+
+`preqrequisites` is a comma-seperated list of dependendies that must be ready to use before calling a dependency `initializer` - specifically the prerequisites' `initializer`(s) must be called before it's `initializer` executes.
+
+```coffeescript
+Madul = require 'madul'
+
+class Baz extends Madul
+
+  deps: [ 'example = configure:args', 'arguments -> args = load_args' ]
+
+  load_args: (done) ->
+    # Do whatever needs to be done
+
+  configure: (done) ->
+    # CONFIGURE ALL THE THINGS
+
+module.exports = Baz
+```
+
+The order of execution above would be:
+
+1. Hydrate `example` and `arguments` in parallel.
+2. Execute `Baz.load_args`
+3. Execute `Baz.configure`
 
 ## Initialization in depth
 
