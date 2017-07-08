@@ -186,10 +186,16 @@
         Madul.FIRE "!.#{@constructor.name}.#{event}", details
 
       _report: (name, method, state, id, args) =>
-        Madul.FIRE "@.#{name}.#{method}.#{state}",
-          uuid:      id
-          args:      args
-          timestamp: microtime.now()
+        if state == 'reject'
+          Madul.FIRE "!.#{name}.#{method}.#{state}",
+            uuid:      id
+            message:   args
+            timestamp: microtime.now()
+        else
+          Madul.FIRE "@.#{name}.#{method}.#{state}",
+            uuid:      id
+            args:      args
+            timestamp: microtime.now()
 
       _respond: (proto, method, id, deferred) =>
         (state, data) =>
