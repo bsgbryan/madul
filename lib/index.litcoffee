@@ -220,7 +220,7 @@
           input = [ input ]
         else
           msg = "input to #{proto.constructor.name}.#{method} must be an Array of Object"
-          @warn 'input.invalid', msg
+          proto.warn.call proto, 'input.invalid', msg
           throw new Error msg
 
         proto._report proto.constructor.name, method, 'invoke', id, input
@@ -339,7 +339,7 @@
 
                 def.promise
           else
-            @warn 'cannot-wrap', method
+            proto.warn.call proto, 'cannot-wrap', method
 
           WRAPPED[proto.constructor.name].push method
 
@@ -542,7 +542,7 @@
         if _INITIALIZERS[name]?
           async.each _INITIALIZERS[name], (initializer, next) =>
             if initializer.called == false
-              proto[initializer.fn].apply @
+              proto[initializer.fn].apply proto
                 .then =>
                   initializer.called = true
                   next()
