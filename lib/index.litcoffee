@@ -12,8 +12,6 @@
     initialized = { }
     listeners   = { }
 
-    code_root = process.env.SEARCH_ROOT || 'dist'
-
     underscore = (value) -> value.replace /\W+/g, '_'
     strip      = (name)  -> name.toLowerCase().replace /\W+/g, ''
 
@@ -21,6 +19,7 @@
     WRAPPED       = { }
     _INITIALIZERS = { }
     HYDRATED      = { }
+    LOCALS        = { }
 
     HYRDATION_LISTENERS = { }
 
@@ -457,7 +456,7 @@
         initers = [ ]
 
         async.each deps, (d, next) =>
-          { ref, alias, name, root, initer, pres } = @_parse_handle d
+          { ref, alias, name, root, initer, pres, local } = Madul.PARSE_SPEC d
 
           if pres?
             insert_at = for p in pres
@@ -475,14 +474,20 @@
             if available[strip ref]? == true
               proto._do_add proto, available[strip ref], ref, next
             else
-              try
-                proto._add proto, ref, name, next
-              catch e
-                if root?
-                  Madul.FIRE '$.Madul.search_root.load', { name, alias, root }
+              if root?
+                Madul.FIRE '$.Madul.search_root.load', { name, alias, root }
 
-                  proto._check proto, root, name, ref, next
-                else
+                @_do_hydrate proto, [ root ], =>
+                  if SEARCH_ROOTS[root] == undefined
+                    SEARCH_ROOTS[root] = @_find_code_root root
+
+                  proto._check proto, SEARCH_ROOTS[root], name, ref, next
+              else if local
+                proto._check proto, LOCALS[proto.constructor.name], name, ref, next
+              else
+                try
+                  proto._add proto, ref, name, next
+                catch e
                   cwd = process.cwd()
                   pkg = "#{cwd}/node_modules/#{name}/package.json"
 
@@ -495,7 +500,7 @@
 
                         proto._add proto, ref, path, next
                     else
-                      proto._check proto, "#{cwd}/#{code_root}", name, ref, next
+                      proto._check proto, LOCALS[proto.constructor.name], name, ref, next
           else
             next()
         , =>
@@ -535,6 +540,17 @@
         else
           callback()
 
+      _find_code_root: (resource) =>
+        file  = resource.toLowerCase()
+        found = for own key, val of require.cache
+          if key.replace(/_/g, '').toLowerCase().includes file
+            key.substring(0, key.lastIndexOf '/').split '/'
+
+        found
+          .filter (f) => f?
+          .sort((a, b) => a.length - b.length)[0]
+          .join '/'
+
       initialize: =>
         deferred = q.defer()
         proto    = @.__proto__
@@ -547,6 +563,9 @@
 
           initialized[name] = false
           listeners[name]   = [ deferred.resolve ]
+
+          if LOCALS[name] == undefined
+            LOCALS[name] = @_find_code_root name
 
           @_hydrate_deps proto, => @_wrap_methods proto, => @_finish_up proto
         else if initialized[name] == false
