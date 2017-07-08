@@ -184,15 +184,19 @@ Dependencies are specified using strings formatted to a spec: the `dependency_sp
 
 Aside from `name` all spec properties are optional.
 
-An example of a `dependency_spec` with all properties would look like this: `example#dependency -> dep = configure:other_dep,even_more`.
+An example of a `dependency_spec` with all properties would look like this:
+
+```
+example#dependency -> dep = configure:other_dep,even_more
+```
 
 Let's step through each property.
 
-### `search_root`
+#### `search_root`
 
 The `search_root` precedes the `#` symbol in the example above. Maduls specify a search root to make loading files other than `index.js` ro whatever is specified as `main` in `package.json` easy.
 
-A Madul specifies a search root like so (_in `index.js`_):
+A Madul specifies a search root like so (_in `index.js`, for example_):
 
 ```coffeescript
 Madul = require 'madul'
@@ -234,9 +238,9 @@ module.exports = Foo
 
 Dependencies are hydrated by recursively searching all files and folders in a search root - so you can structure you're Maduls however you'd like. To load them, client code only needs to know the file name of the Madul they actually want to load.
 
-### `alias`
+#### `alias`
 
-An alias is a more convenient/meaningful way to refer to a dependency. If an `alias` is specified, it is the only way to refer to the dependency in code.
+An `alias` is a more convenient/meaningful way to refer to a dependency. If an `alias` is specified, it is the only way to refer to the dependency in code.
 
 ```coffeescript
 Madul = require 'madul'
@@ -252,7 +256,7 @@ class Foo extends Madul
 module.exports = Foo
 ```
 
-### `initializer`
+#### `initializer`
 
 A dependency `initializer` in a `dependency_spec` specifies the method on the dependant Madul to be invoked when the dependency has been hydrated.
 
@@ -271,9 +275,9 @@ module.exports = Bar
 
 A dependency `initializer` is just a plain old Madul method.
 
-### `prerequisites`
+#### `prerequisites`
 
-`preqrequisites` is a comma-seperated list of dependendies that must be ready to use before calling a dependency `initializer` - specifically the prerequisites' `initializer`(s) must be called before it's `initializer` executes.
+`preqrequisites` is a comma-seperated list of dependendies that must be ready to use before calling a dependency `initializer` - specifically, all prerequisites' `initializer` methods must be called, in the order specified, before the dependency's `initializer` executes.
 
 ```coffeescript
 Madul = require 'madul'
