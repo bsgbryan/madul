@@ -80,6 +80,103 @@
 
         SEARCH_ROOTS[mod] = path.substring 0, path.lastIndexOf '/'
 
+      @PARSE_SPEC: (value) =>
+        tokens = value.split '='
+
+        if tokens.length == 2
+          initer = tokens[1].trim()
+          t      = tokens[0].split '->'
+
+          if t[0].indexOf('#') > -1
+            r = t[0].split '#'
+
+            root = r[0].trim()
+            t[0] = r[1]
+
+          if t.length == 2
+            n = t[0].trim()
+
+            if n[0] == '.'
+              local = true
+              name  = n.substring 1, n.length
+            else
+              local = false
+              name  = n
+
+            alias = t[1].trim()
+          else if t.length == 1
+            n = t[0].trim()
+
+            if n[0] == '.'
+              local = true
+              name  = alias = n.substring 1, n.length
+            else
+              local = false
+              name  = alias = n
+          else
+            return Madul.FIRE '!.Madul.dependency_spec.alias.invalid', tokens[1]
+
+          toks = initer.split ':'
+
+          if toks.length == 2
+            initer = toks[0].trim()
+            pres   = toks[1].split(',').map (p) => p.trim()
+          else if toks.length == 1
+            initer = toks[0].trim()
+          else
+            return Madul.FIRE '!.Madul.dependency_spec.initializer.invalid', tokens[1]
+
+        else if tokens.length == 1
+          t = tokens[0].split '->'
+
+          if t[0].indexOf('#') > -1
+            r = t[0].split '#'
+
+            root = r[0].trim()
+            t[0] = r[1]
+
+          if t.length == 2
+            n = t[0].trim()
+
+            if n[0] == '.'
+              local = true
+              name  = n.substring 1, n.length
+            else
+              local = false
+              name  = n
+
+            alias = t[1].trim()
+          else if t.length == 1
+            n = t[0].trim()
+
+            if n[0] == '.'
+              local = true
+              name  = alias = n.substring 1, n.length
+            else
+              local = false
+              name  = alias = n
+          else
+            return Madul.FIRE '!.Madul.dependency_spec.alias.invalid', tokens[1]
+
+        else
+          return Madul.FIRE '!.Madul.dependency_spec.invalid', d
+
+        { ref: alias || name, alias, name, root, initer, pres, local }
+
+      @BUILD_SPEC: ({ search_root, name, alias, initializer, prerequisites }) =>
+        unless name?
+          return Madul.FIRE '!.Madul.dependency_spec.name-required', arguments[0]
+
+        if prerequisites? && initializer? == false
+          return Madul.FIRE '!.Madul.dependency_spec.prerequisites-require-initializer', arguments[0]
+
+        "#{if search_root?   then "#{search_root}#"            else ''}\
+         #{name}\
+         #{if alias?         then " -> #{alias}"               else ''}\
+         #{if initializer?   then " = #{initializer}"          else ''}\
+         #{if prerequisites? then ":#{prerequisites.join ','}" else ''}\
+        "
+
       listen: (event, callback) ->
         Madul.LISTEN "*.#{@constructor.name}.#{event}", callback
 
@@ -355,59 +452,6 @@
         me._init_if_madul path, (mod) =>
           me._make_available ref, mod
           me._do_add me, mod, ref, next
-
-      _parse_handle: (value) =>
-        tokens = value.split '='
-
-        if tokens.length == 2
-          initer = tokens[1].trim()
-          t      = tokens[0].split '->'
-
-          if t[0].indexOf('#') > -1
-            r = t[0].split '#'
-
-            root = SEARCH_ROOTS[r[0].trim()]
-            t[0] = r[1]
-
-          if t.length == 2
-            name  = t[0].trim()
-            alias = t[1].trim()
-          else if t.length == 1
-            name = alias = t[0].trim()
-          else
-            return next @warn 'alias.invalid', tokens[1]
-
-          toks = initer.split ':'
-
-          if toks.length == 2
-            initer = toks[0].trim()
-            pres   = toks[1].split(',').map (p) => p.trim()
-          else if toks.length == 1
-            initer = toks[0].trim()
-          else
-            return next @warn 'dependency-initializer.invalid', tokens[1]
-
-        else if tokens.length == 1
-          t = tokens[0].split '->'
-
-          if t[0].indexOf('#') > -1
-            r = t[0].split '#'
-
-            root = SEARCH_ROOTS[r[0].trim()]
-            t[0] = r[1]
-
-          if t.length == 2
-            name  = t[0].trim()
-            alias = t[1].trim()
-          else if t.length == 1
-            name = alias = t[0].trim()
-          else
-            return next @warn 'alias.invalid', tokens[1]
-
-        else
-          return next @warn 'dependency.invalid', d
-
-        { ref: alias || name, alias, name, root, initer, pres }
 
       _do_hydrate: (proto, deps, hydration_complete) =>
         initers = [ ]
