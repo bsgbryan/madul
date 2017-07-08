@@ -236,46 +236,41 @@
 
             proto[method] = =>
               def  = q.defer()
-              args = if arguments[0]? then Array.prototype.slice.call arguments else [ ]
+              args = Array.prototype.slice.call arguments
 
-              proto["_#{method}"].apply @, proto._prep_invocation proto, method, args, def
+              proto["_#{method}"].apply proto, proto._prep_invocation proto, method, args, def
 
               def.promise
           else if typeof proto[method] == 'object'
 
             if Array.isArray proto[method].validate
               args_format = 'ARRAY'
-              decs        = for val in proto[method].validate
-                @_parse_handle(val).ref
+              decs        = proto[method].validate
 
               proto[method].validate = decs
             else if typeof proto[method].validate == 'object'
               args_format = 'OBJECT'
               decs        = for own key, val of proto[method].validate
-                { ref } = @_parse_handle val
-                proto[method].validate[key] = ref
-                ref
+                val
             else if typeof proto[method].validate == 'string'
               args_format = 'ARRAY'
-              decs        = [ @_parse_handle(proto[method].validate).ref ]
+              decs        = [ proto[method].validate ]
             else if typeof proto[method].validate != 'undefined'
-              @warn 'meta.invalid', validate: 'must be a String, Object, or Array'
+              proto.warn.call proto, 'meta.invalid', validate: 'must be a String, Object, or Array'
               return
             else
               args_format = 'ARRAY'
               decs        = [ ]
 
-            decs = decs.concat(proto[method].before.map (b, i) =>
-              { ref } = @_parse_handle b
-              proto[method].before[i] = ref
-              ref
-            ) if proto[method].before?
+            if Array.isArray proto[method].before
+              decs = decs.concat proto[method].before
+            else if typeof proto[method].before == 'string'
+              decs = decs.concat [ proto[method].before ]
 
-            decs = decs.concat(proto[method].after.map (a, i) =>
-              { ref } = @_parse_handle a
-              proto[method].after[i] = ref
-              ref
-            ) if proto[method].after?
+            if Array.isArray proto[method].after
+              decs = decs.concat proto[method].after
+            else if typeof proto[method].after == 'string'
+              decs = decs.concat [ Madul.PARSE_SPEC proto[method].after ]
 
             Madul.FIRE '$.Madul.decorators.hydrate', decs
 
@@ -291,37 +286,48 @@
 
                   if me.validate?
                     validators = for val, i in me.validate
-                      { ref } = @_parse_handle val
+                      { ref } = Madul.PARSE_SPEC val
                       Madul.FIRE '$.Madul.validator.execute', "#{ref}": args[i]
-                      proto[ref].EXECUTE args[i]
+                      proto[ref].EXECUTE.call proto[ref], args[i]
                 else if args_format == 'OBJECT'
                   args = arguments[0]
 
                   if me.validate?
                     validators = for own key, val of me.validate
-                      { ref } = @_parse_handle val
+                      { ref } = Madul.PARSE_SPEC val
                       Madul.FIRE '$.Madul.validator.execute', "#{ref}": args[key]
-                      proto[ref].EXECUTE args[key]
+                      proto[ref].EXECUTE.call proto[ref], args[key]
                 else
-                  @warn 'cannot-continue', 'No arg format specified'
+                  proto.warn.call proto, 'cannot-continue', 'No arg format specified'
 
                   return def.reject 'No arg format specified'
 
-                me.before = [ ] unless me.before?
-                me.after  = [ ] unless me.after?
+                if Array.isArray me.before
+                  before = me.before.map (b) => Madul.PARSE_SPEC(b).ref
+                else if typeof me.before == 'string'
+                  before = [ Madul.PARSE_SPEC(me.before).ref ]
+                else
+                  before = [ ]
+
+                if Array.isArray me.after
+                  after = me.after.map (a) => Madul.PARSE_SPEC(a).ref
+                else if typeof me.after == 'string'
+                  after = [ Madul.PARSE_SPEC(me.after).ref ]
+                else
+                  after = [ ]
 
                 q.all validators
                 .then =>
-                  q.all me.before.map (b) =>
+                  q.all before.map (b) =>
                     Madul.FIRE '$.Madul.before_filter.execute', "#{b}": args
-                    proto[b].before args
+                    proto[b].before.call proto[b], args
                 .then =>
-                  me.behavior.apply @, @_prep_invocation proto, method, args, def
+                  me.behavior.apply me, @_prep_invocation proto, method, args, def
                 .then (result) =>
-                  if me.after.length > 0
-                    q.all me.after.map (b) =>
-                      Madul.FIRE '$.Madul.after_filter.execute', "#{b}": result
-                      b.after result
+                  if after.length > 0
+                    q.all after.map (a) =>
+                      Madul.FIRE '$.Madul.after_filter.execute', "#{a}": result
+                      proto[a].after.call proto[a], result
                   else
                     d = q.defer()
 
