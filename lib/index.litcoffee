@@ -259,11 +259,21 @@
                 "#{i}": Madul.PARSE_SPEC(val).ref
             else if typeof proto[method].validate == 'object'
               args_format = 'OBJECT'
-              decs        = for own key, val of proto[method].validate
-                val
+              decs        = [ ]
+
+              for own key, val of proto[method].validate
+                if Array.isArray val
+                  for v in val
+                    decs.push v
+                else
+                  decs.push val
 
               proto[method].validators = for own key, val of proto[method].validate
-                "#{key}": Madul.PARSE_SPEC(val).ref
+                if Array.isArray val
+                  "#{key}": for v in val
+                    Madul.PARSE_SPEC(v).ref
+                else
+                  "#{key}": Madul.PARSE_SPEC(val).ref
             else if typeof proto[method].validate == 'string'
               args_format = 'ARRAY'
               decs        = [ proto[method].validate ]
@@ -304,16 +314,24 @@
 
                   return def.reject 'No arg format specified'
 
-                validators = for v in me.validators
+                validators = [ ]
+
+                for v in me.validators
                   arg       = Object.keys(v)[0]
                   validator = v[arg]
 
-                  Madul.FIRE '$.Madul.validator.execute', "#{validator}": args[arg]
+                  if Array.isArray validator
+                    for v in validator
+                      Madul.FIRE '$.Madul.validator.execute', "#{v}": args[arg]
 
-                  proto[validator].EXECUTE.call proto[validator], args[arg]
+                      validators.push proto[v].EXECUTE.call proto[v], arg, args[arg]
+                  else
+                    Madul.FIRE '$.Madul.validator.execute', "#{validator}": args[arg]
 
-                before = @_process_decorators 'before'
-                after  = @_process_decorators 'after'
+                    validators.push proto[validator].EXECUTE.call proto[validator], arg, args[arg]
+
+                before = @_process_decorators me, 'before'
+                after  = @_process_decorators me, 'after'
 
                 q.all validators
                 .then =>
