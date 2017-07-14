@@ -227,6 +227,14 @@
 
         input
 
+      _process_decorators: (type) =>
+        if Array.isArray me[type]
+          me[type].map (b) => Madul.PARSE_SPEC(b).ref
+        else if typeof me[type] == 'string'
+          [ Madul.PARSE_SPEC(me[type]).ref ]
+        else
+          [ ]
+
       _do_wrap: (proto, method) =>
         if method != 'fire' && method != 'warn' && method != 'listen'
           Madul.FIRE "$.#{proto.constructor.name}.#{method}.wrap"
@@ -247,14 +255,20 @@
               args_format = 'ARRAY'
               decs        = proto[method].validate
 
-              proto[method].validate = decs
+              proto[method].validators = for val, i in decs
+                "#{i}": Madul.PARSE_SPEC(val).ref
             else if typeof proto[method].validate == 'object'
               args_format = 'OBJECT'
               decs        = for own key, val of proto[method].validate
                 val
+
+              proto[method].validators = for own key, val of proto[method].validate
+                "#{key}": Madul.PARSE_SPEC(val).ref
             else if typeof proto[method].validate == 'string'
               args_format = 'ARRAY'
               decs        = [ proto[method].validate ]
+
+              proto[method].validators = [ { 0: Madul.PARSE_SPEC(proto[method].validate).ref }]
             else if typeof proto[method].validate != 'undefined'
               proto.warn.call proto, 'meta.invalid', validate: 'must be a String, Object, or Array'
               return
@@ -283,38 +297,23 @@
 
                 if args_format == 'ARRAY'
                   args = Array.prototype.slice.call arguments
-
-                  if me.validate?
-                    validators = for val, i in me.validate
-                      { ref } = Madul.PARSE_SPEC val
-                      Madul.FIRE '$.Madul.validator.execute', "#{ref}": args[i]
-                      proto[ref].EXECUTE.call proto[ref], args[i]
                 else if args_format == 'OBJECT'
                   args = arguments[0]
-
-                  if me.validate?
-                    validators = for own key, val of me.validate
-                      { ref } = Madul.PARSE_SPEC val
-                      Madul.FIRE '$.Madul.validator.execute', "#{ref}": args[key]
-                      proto[ref].EXECUTE.call proto[ref], args[key]
                 else
                   proto.warn.call proto, 'cannot-continue', 'No arg format specified'
 
                   return def.reject 'No arg format specified'
 
-                if Array.isArray me.before
-                  before = me.before.map (b) => Madul.PARSE_SPEC(b).ref
-                else if typeof me.before == 'string'
-                  before = [ Madul.PARSE_SPEC(me.before).ref ]
-                else
-                  before = [ ]
+                validators = for v in me.validators
+                  arg       = Object.keys(v)[0]
+                  validator = v[arg]
 
-                if Array.isArray me.after
-                  after = me.after.map (a) => Madul.PARSE_SPEC(a).ref
-                else if typeof me.after == 'string'
-                  after = [ Madul.PARSE_SPEC(me.after).ref ]
-                else
-                  after = [ ]
+                  Madul.FIRE '$.Madul.validator.execute', "#{validator}": args[arg]
+
+                  proto[validator].EXECUTE.call proto[validator], args[arg]
+
+                before = @_process_decorators 'before'
+                after  = @_process_decorators 'after'
 
                 q.all validators
                 .then =>
