@@ -227,11 +227,11 @@
 
         input
 
-      _process_decorators: (type) =>
-        if Array.isArray me[type]
-          me[type].map (b) => Madul.PARSE_SPEC(b).ref
-        else if typeof me[type] == 'string'
-          [ Madul.PARSE_SPEC(me[type]).ref ]
+      _process_decorators: (proto, type) =>
+        if Array.isArray proto[type]
+          proto[type].map (b) => Madul.PARSE_SPEC(b).ref
+        else if typeof proto[type] == 'string'
+          [ Madul.PARSE_SPEC(proto[type]).ref ]
         else
           [ ]
 
