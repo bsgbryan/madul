@@ -507,19 +507,12 @@
                 try
                   proto._add proto, spec.ref, spec.name, next
                 catch e
-                  cwd = process.cwd()
-                  pkg = "#{cwd}/node_modules/#{name}/package.json"
+                  path = "#{process.cwd()}/node_modules"
 
-                  fs.stat pkg, (err, stat) =>
-                    if stat?.isFile()
-                      fs.readFile pkg, 'utf8', (err, data) =>
-                        json = JSON.parse data
-                        main = json.main || json._main || 'index.js'
-                        path = "#{cwd}/node_modules/#{name}/#{main}"
+                  @_load_from_package_json proto, path, spec.name, spec.ref, next, =>
+                    pth = LOCALS[proto.constructor.name]
 
-                        proto._add proto, ref, path, next
-                    else
-                      proto._check proto, LOCALS[proto.constructor.name], name, ref, next
+                    proto._check proto, pth, spec.name, spec.ref, next
           else
             next()
         , =>
