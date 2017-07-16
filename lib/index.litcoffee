@@ -562,15 +562,21 @@
         else
           callback()
 
-      _find_code_root: (resource) =>
-        file  = resource.toLowerCase()
+      _do_find: (thing, cb) =>
+        file  = thing.toLowerCase()
         found = for own key, val of require.cache
           if key.replace(/_/g, '').toLowerCase().includes file
-            key.substring(0, key.lastIndexOf '/').split '/'
+            cb key
 
         found
           .filter (f) => f?
           .sort((a, b) => a.length - b.length)[0]
+
+      _find_require_key: (resource) =>
+        @_do_find resource, (key) => key
+
+      _find_code_root: (resource) =>
+        @_do_find resource, (key) => key.substring(0, key.lastIndexOf '/').split '/'
           .join '/'
 
       initialize: =>
