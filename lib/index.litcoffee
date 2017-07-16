@@ -464,10 +464,10 @@
         initers = [ ]
 
         async.each deps, (d, next) =>
-          { ref, alias, name, root, initer, pres, local } = Madul.PARSE_SPEC d
+          spec = Madul.PARSE_SPEC d
 
-          if pres?
-            insert_at = for p in pres
+          if spec.prerequisites?
+            insert_at = for p in spec.prerequisites
               index_for = (sibling) => sibling.alias == p.alias
 
               initers.find index_for
@@ -476,25 +476,25 @@
 
             insert_at = if insert_at.length == 0 then 0 else insert_at[insert_at.length - 1]
 
-            initers.splice insert_at, 0, alias: alias, execute: initer
+            initers.splice insert_at, 0, alias: spec.alias, execute: spec.initializer
 
-          if proto[underscore ref]? == false
-            if available[strip ref]? == true
-              proto._do_add proto, available[strip ref], ref, next
+          if typeof proto[underscore spec.ref] == 'undefined'
+            if available[strip spec.ref]? == true
+              proto._do_add proto, available[strip spec.ref], spec.ref, next
             else
-              if root?
-                Madul.FIRE '$.Madul.search_root.load', { name, alias, root }
+              if spec.parent?
+                Madul.FIRE '$.Madul.search_root.load', { name: spec.name, alias: spec.alias, parent: spec.parent }
 
-                @_do_hydrate proto, [ root ], =>
-                  if SEARCH_ROOTS[root] == undefined
-                    SEARCH_ROOTS[root] = @_find_code_root root
+                @_do_hydrate proto, [ spec.parent ], =>
+                  if SEARCH_ROOTS[spec.parent] == undefined
+                    SEARCH_ROOTS[spec.parent] = @_find_code_root spec.parent
 
-                  proto._check proto, SEARCH_ROOTS[root], name, ref, next
-              else if local
-                proto._check proto, LOCALS[proto.constructor.name], name, ref, next
+                  proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, next
+              else if spec.project_local
+                proto._check proto, LOCALS[proto.constructor.name], spec.name, spec.ref, next
               else
                 try
-                  proto._add proto, ref, name, next
+                  proto._add proto, spec.ref, spec.name, next
                 catch e
                   cwd = process.cwd()
                   pkg = "#{cwd}/node_modules/#{name}/package.json"
