@@ -490,6 +490,17 @@
                     SEARCH_ROOTS[spec.parent] = @_find_code_root spec.parent
 
                   proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, next
+              else if spec.node_local
+                key = @_find_require_key proto.constructor.name
+
+                async.eachSeries require.cache[key].paths, (path, nxt) =>
+                  @_load_from_package_json proto, path, spec.name, spec.ref, =>
+                    stop = new Error()
+                    stop.break = true
+
+                    next()
+                    nxt stop
+                  , nxt
               else if spec.project_local
                 proto._check proto, LOCALS[proto.constructor.name], spec.name, spec.ref, next
               else
