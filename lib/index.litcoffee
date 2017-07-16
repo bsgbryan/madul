@@ -38,6 +38,48 @@
 
       WRAPPED[cls].indexOf(method) < 0
 
+    determine_local = (token) ->
+      project_local = false
+      node_local    = false
+      name          = token.substring 1, token.length
+
+      if token[0] == '.'
+        project_local = true
+      else if token[0] == '~'
+        node_local = true
+      else
+        name = token
+
+      [project_local, node_local, name]
+
+    parse_name_and_local = (tokens) ->
+      [project_local, node_local, name] = determine_local tokens[0].trim()
+
+      if tokens.length == 2
+        alias = tokens[1].trim()
+      else if tokens.length == 1
+        alias = name
+      else
+        return Madul.FIRE '!.Madul.dependency_spec.alias.invalid', tokens[1]
+
+      [project_local, node_local, name, alias]
+
+    parse_alias_and_parent = (token) ->
+      t = token.split '->'
+
+      if t[0].indexOf('#') > -1
+        r      = t[0].split '#'
+        parent = r[0].trim()
+        t[0]   = r[1]
+
+      [parent, t]
+
+    extract_properties = (token) ->
+      [parent, t] = parse_alias_and_parent token
+      [project_local, node_local, name, alias] = parse_name_and_local t
+
+      [project_local, node_local, name, alias, parent]
+
     class Madul
 
       details: =>
@@ -82,85 +124,22 @@
       @PARSE_SPEC: (value) =>
         tokens = value.split '='
 
+        [project_local, node_local, name, alias, parent] = extract_properties tokens[0]
+
         if tokens.length == 2
-          initer = tokens[1].trim()
-          t      = tokens[0].split '->'
-
-          if t[0].indexOf('#') > -1
-            r = t[0].split '#'
-
-            root = r[0].trim()
-            t[0] = r[1]
-
-          if t.length == 2
-            n = t[0].trim()
-
-            if n[0] == '.'
-              local = true
-              name  = n.substring 1, n.length
-            else
-              local = false
-              name  = n
-
-            alias = t[1].trim()
-          else if t.length == 1
-            n = t[0].trim()
-
-            if n[0] == '.'
-              local = true
-              name  = alias = n.substring 1, n.length
-            else
-              local = false
-              name  = alias = n
-          else
-            return Madul.FIRE '!.Madul.dependency_spec.alias.invalid', tokens[1]
-
-          toks = initer.split ':'
+          initializer = tokens[1].trim()
+          toks        = initer.split ':'
+          initializer = toks[0].trim()
 
           if toks.length == 2
-            initer = toks[0].trim()
-            pres   = toks[1].split(',').map (p) => p.trim()
-          else if toks.length == 1
-            initer = toks[0].trim()
-          else
+            prerequisites = toks[1].split(',').map (p) => p.trim()
+          else if toks.length > 2
             return Madul.FIRE '!.Madul.dependency_spec.initializer.invalid', tokens[1]
 
-        else if tokens.length == 1
-          t = tokens[0].split '->'
-
-          if t[0].indexOf('#') > -1
-            r = t[0].split '#'
-
-            root = r[0].trim()
-            t[0] = r[1]
-
-          if t.length == 2
-            n = t[0].trim()
-
-            if n[0] == '.'
-              local = true
-              name  = n.substring 1, n.length
-            else
-              local = false
-              name  = n
-
-            alias = t[1].trim()
-          else if t.length == 1
-            n = t[0].trim()
-
-            if n[0] == '.'
-              local = true
-              name  = alias = n.substring 1, n.length
-            else
-              local = false
-              name  = alias = n
-          else
-            return Madul.FIRE '!.Madul.dependency_spec.alias.invalid', tokens[1]
-
-        else
+        else if tokens.length > 2
           return Madul.FIRE '!.Madul.dependency_spec.invalid', d
 
-        { ref: alias || name, alias, name, root, initer, pres, local }
+        { ref: alias || name, alias, name, parent, initializer, prerequisites, project_local, node_local }
 
       @BUILD_SPEC: ({ search_root, name, alias, initializer, prerequisites }) =>
         unless name?
