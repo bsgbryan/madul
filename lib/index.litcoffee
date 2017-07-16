@@ -516,6 +516,20 @@
             proto[initer.execute].apply(@).then next
           , hydration_complete
 
+      _load_from_package_json: (proto, path, name, ref, success, fail) =>
+        pkg = "#{path}/#{name}/package.json"
+
+        fs.stat pkg, (err, stat) =>
+          if stat?.isFile()
+            fs.readFile pkg, 'utf8', (err, data) =>
+              json = JSON.parse data
+              main = json.main || json._main || 'index.js'
+              path = "#{path}/#{name}/#{main}"
+
+              proto._add proto, ref, path, success
+          else
+            fail()
+
       _finish_up: (proto, args) =>
         name = proto.constructor.name
 
