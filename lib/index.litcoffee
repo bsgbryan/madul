@@ -21,6 +21,17 @@
     HYDRATED      = { }
     LOCALS        = { }
 
+    SKIP_WRAP = [
+      'constructor'
+      'initialize'
+      'details'
+      'fire'
+      'warn'
+      'listen'
+      'set'
+      'runtime_exception'
+    ]
+
     HYRDATION_LISTENERS = { }
 
     INITIALIZERS = (cls, method) ->
@@ -29,12 +40,7 @@
       _INITIALIZERS[cls].push fn: method, called: false
 
     WRAP = (cls, method) ->
-      unless WRAPPED[cls]?
-        WRAPPED[cls] = [
-          'constructor'
-          'initialize'
-          'details'
-        ]
+      WRAPPED[cls] = [ ] unless WRAPPED[cls]?
 
       WRAPPED[cls].indexOf(method) < 0
 
@@ -128,7 +134,7 @@
 
         if tokens.length == 2
           initializer = tokens[1].trim()
-          toks        = initer.split ':'
+          toks        = initializer.split ':'
           initializer = toks[0].trim()
 
           if toks.length == 2
@@ -161,48 +167,81 @@
       fire: (event, args) ->
         Madul.FIRE "@.#{@constructor.name}.#{event}", args
 
-      warn: (event, details) ->
+      warn: (event, details, finisher) =>
         Madul.FIRE "!.#{@constructor.name}.#{event}", details
 
-      _report: (name, method, state, id, args) =>
-        if state == 'reject'
-          Madul.FIRE "!.#{name}.#{method}.#{state}",
-            uuid:      id
-            message:   args
-            timestamp: microtime.now()
-        else
-          Madul.FIRE "@.#{name}.#{method}.#{state}",
-            uuid:      id
-            args:      args
+        finisher() if typeof finisher == 'function'
+
+      runtime_exception: (exit = false) =>
+        (err) =>
+          Madul.FIRE "!.#{@constructor.name}.runtime-exception",
+            stack:     err.stack
+            message:   err.message
             timestamp: microtime.now()
 
+          process.exit(1) if exit == 'DIE_ON_EXCEPTION'
+
+      set: (prop, val) =>
+        proto = @.__proto__
+        mod   = available[strip proto.constructor.name.toLowerCase()]
+
+        if mod?
+          mod.__proto__[prop] = val
+
+      _report: (method, state, id, args, breaker) =>
+        invoke = undefined
+        params =
+          uuid:      id
+          args:      args
+          timestamp: microtime.now()
+
+        if state == 'reject'
+          if typeof breaker == 'function'
+            stop = new Error()
+            stop.break = true
+
+            breaker stop
+
+          @warn "#{method}.#{state}", params
+        else
+          @fire "#{method}.#{state}", params
+
       _respond: (proto, method, id, deferred) =>
-        (state, data) =>
+        (state, data, breaker) =>
           process.nextTick =>
             deferred[state] data
 
-            proto._report proto.constructor.name, method, state, id, data
+            proto._report method, state, id, data, breaker
 
       _prep_invocation: (proto, method, input, def) =>
         id  = uuid.v4fast()
         res = proto._respond proto, method, id, def
+        e   = (brk) =>
+          error = (err) => res 'reject', err, brk
+
+          if typeof brk == 'function'
+            error
+          else
+            error brk
 
         if Array.isArray input
           input.push (out) => res 'resolve', out
-          input.push (err) => res 'reject',  err
+          input.push e
           input.push (out) => res 'notify',  out
         else if typeof input == 'object'
           input.done   = (out) => res 'resolve', out
-          input.fail   = (err) => res 'reject',  err
+          input.fail   = e
           input.update = (out) => res 'notify',  out
 
           input = [ input ]
         else
           msg = "input to #{proto.constructor.name}.#{method} must be an Array of Object"
+
           proto.warn.call proto, 'input.invalid', msg
+
           throw new Error msg
 
-        proto._report proto.constructor.name, method, 'invoke', id, input
+        proto._report method, 'invoke', id, input
 
         input
 
@@ -214,20 +253,34 @@
         else
           [ ]
 
-      _do_wrap: (proto, method) =>
-        if method != 'fire' && method != 'warn' && method != 'listen'
+      _do_wrap: (proto, method, wrapped) =>
+        if SKIP_WRAP.includes method
+          wrapped()
+        else
           Madul.FIRE "$.#{proto.constructor.name}.#{method}.wrap"
 
           if typeof proto[method] == 'function'
             proto["_#{method}"] = proto[method]
 
             proto[method] = =>
-              def  = q.defer()
-              args = Array.prototype.slice.call arguments
+              def   = q.defer()
+              args  = Array.prototype.slice.call arguments
+              input = proto._prep_invocation proto, method, args, def
 
-              proto["_#{method}"].apply proto, proto._prep_invocation proto, method, args, def
+              try
+                proto["_#{method}"].apply proto, input
+              catch e
+                failed = if input[0].fail? then input[0].fail else input[input.length - 2]
+
+                proto.warn.call proto, 'runtime-exception', stack: e.stack, message: e.message
+
+                failed e.message
 
               def.promise
+
+            INITIALIZERS proto.constructor.name, method if method[0] == '$'
+
+            wrapped()
           else if typeof proto[method] == 'object'
 
             if Array.isArray proto[method].validate
@@ -244,15 +297,31 @@
                 if Array.isArray val
                   for v in val
                     decs.push v
+                else if typeof val == 'object'
+                  for own k, v of val
+                    if Array.isArray v
+                      for V in v
+                        decs.push V
+                    else
+                      decs.push v
                 else
                   decs.push val
 
-              proto[method].validators = for own key, val of proto[method].validate
+              proto[method].validators = [ ]
+
+              for own key, val of proto[method].validate
                 if Array.isArray val
-                  "#{key}": for v in val
+                  proto[method].validators.push "#{key}": for v in val
                     Madul.PARSE_SPEC(v).ref
+                else if typeof val == 'object'
+                  for own k, v of val
+                    if Array.isArray v
+                      proto[method].validators.push "#{key}.#{k}": for V in v
+                        Madul.PARSE_SPEC(V).ref
+                    else
+                      proto[method].validators.push "#{key}.#{k}": Madul.PARSE_SPEC(v).ref
                 else
-                  "#{key}": Madul.PARSE_SPEC(val).ref
+                  proto[method].validators.push "#{key}": Madul.PARSE_SPEC(val).ref
             else if typeof proto[method].validate == 'string'
               args_format = 'ARRAY'
               decs        = [ proto[method].validate ]
@@ -275,9 +344,21 @@
             else if typeof proto[method].after == 'string'
               decs = decs.concat [ Madul.PARSE_SPEC proto[method].after ]
 
-            Madul.FIRE '$.Madul.decorators.hydrate', decs
+            deduped = decs.filter (e, i, a) => a.indexOf(e) == i
 
-            @_do_hydrate proto, decs, =>
+            Madul.FIRE '$.Madul.decorators.hydrate', deduped
+
+            handle_err = (fn, args, next, reject) =>
+              (err) =>
+                proto.warn.call proto, "#{fn}.validator.failed", args
+                reject err
+
+                stop = new Error()
+                stop.break = true
+
+                next stop
+
+            @_do_hydrate proto, deduped, =>
               proto["_#{method}"] = proto[method]
 
               proto[method] = =>
@@ -293,47 +374,75 @@
 
                   return def.reject 'No arg format specified'
 
-                validators = [ ]
-
-                for v in me.validators
-                  arg       = Object.keys(v)[0]
-                  validator = v[arg]
-
-                  if Array.isArray validator
-                    for v in validator
-                      Madul.FIRE '$.Madul.validator.execute', "#{v}": args[arg]
-
-                      validators.push proto[v].EXECUTE.call proto[v], arg, args[arg]
-                  else
-                    Madul.FIRE '$.Madul.validator.execute', "#{validator}": args[arg]
-
-                    validators.push proto[validator].EXECUTE.call proto[validator], arg, args[arg]
-
                 before = @_process_decorators me, 'before'
                 after  = @_process_decorators me, 'after'
 
-                q.all validators
+                q.Promise (resolve, reject) =>
+                  async.eachSeries me.validators, (v, next) =>
+                    arg       = Object.keys(v)[0]
+                    validator = v[arg]
+                    input     = arg
+                    prop      = args
+
+                    for a in arg.split '.'
+                      prop  = prop[a]
+                      input = a
+
+                    if Array.isArray validator
+                      async.eachSeries validator, (v, nxt) =>
+                        proto.fire.call proto, 'validator.execute', "#{v}": prop
+
+                        proto[v].EXECUTE.call proto[v], input, prop
+                          .then nxt
+                          .catch handle_err v, { "#{input}": prop }, nxt, reject
+                      , next
+                    else
+                      proto.fire.call proto, 'validator.execute', "#{validator}": prop
+
+                      proto[validator].EXECUTE.call proto[validator], input, prop
+                        .then next
+                        .catch handle_err v, { "#{input}": prop }, next, reject
+                  , resolve
                 .then =>
-                  q.all before.map (b) =>
-                    Madul.FIRE '$.Madul.before_filter.execute', "#{b}": args
-                    proto[b].before.call proto[b], args
+                  q.Promise (resolve, reject) =>
+                    async.eachSeries before, (b, next) =>
+                      proto.fire.call proto, 'before_filter.execute', "#{b}": args
+
+                      proto[b].before.call proto[b], args
+                        .then next
+                        .catch handle_err b, args, next, reject
+                    , resolve
                 .then =>
-                  me.behavior.apply me, @_prep_invocation proto, method, args, def
+                  input = proto._prep_invocation proto, method, args, def
+
+                  try
+                    me.behavior.apply me, input
+                  catch e
+                    failed = if input[0].fail? then input[0].fail else input[input.length - 2]
+
+                    me.warn.call me, 'runtime-exception', stack: e.stack, message: e.message
+
+                    failed e.message
                 .then (result) =>
-                  if after.length > 0
-                    q.all after.map (a) =>
-                      Madul.FIRE '$.Madul.after_filter.execute', "#{a}": result
-                      proto[a].after.call proto[a], result
-                  else
-                    d = q.defer()
+                  q.Promise (resolve, reject) =>
+                    if after.length > 0
+                      async.eachSeries after, (a, next) =>
+                        proto.fire.call proto, 'after_filter.execute', "#{a}": args
 
-                    process.nextTick => d.resolve result
-
-                    d.promise
+                        proto[a].after.call proto[a], result
+                          .then next
+                          .catch handle_err b, args, next, reject
+                      , => resolve result
+                    else
+                      process.nextTick => resolve result
                 .then  (out) => def.resolve out
                 .catch (err) => def.reject  err
 
                 def.promise
+
+              INITIALIZERS proto.constructor.name, method if method[0] == '$'
+
+              wrapped()
           else
             proto.warn.call proto, 'cannot-wrap', method
 
@@ -361,11 +470,7 @@
 
         async.each to_wrap.reverse(), (wrap, completed) =>
           async.each wrap.methods, (method, next) =>
-            wrap.proto._do_wrap wrap.proto, method
-
-            INITIALIZERS wrap.name, method if method[0] == '$'
-
-            next()
+            wrap.proto._do_wrap wrap.proto, method, next
           , => @_call_initializers_for wrap.proto, wrap.name, completed
         , callback
 
@@ -430,11 +535,13 @@
           loaded mod
 
       _check: (me, path, dep, ref, finished) =>
+        error = true
+
         fs.readdir path, (err, files) =>
           if err?
             me.warn 'file-not-found', err
 
-            done type: 'ERROR', info: err
+            finished 'NOT_FOUND'
           else
             async.each files, (f, next) =>
               depth = "#{path}/#{f}"
@@ -443,22 +550,24 @@
                 if s.isDirectory() && f[0] != '.'
                   me._check me, depth, dep, ref, next
                 else if s.isFile() && f.substring(0, f.length - 3) == dep
-                  me._load me, ref, depth, (mod) => me._do_add me, mod, ref, next
+                  me._load me, ref, depth, (mod) =>
+                    me._do_add me, ref, next
+                    error = undefined
                 else
                   next()
-            , finished
+            , => finished error
 
-      _do_add: (me, mod, ref, next) =>
+      _do_add: (me, ref, next) =>
         Madul.FIRE "$.#{me.constructor.name}.dependency.register", ref
 
-        me[underscore ref] = mod
+        me[underscore ref] = available[strip ref]
 
         next()
 
       _add: (me, ref, path, next) =>
         me._init_if_madul path, (mod) =>
           me._make_available ref, mod
-          me._do_add me, mod, ref, next
+          me._do_add me, ref, next
 
       _do_hydrate: (proto, deps, hydration_complete) =>
         initers = [ ]
@@ -477,10 +586,12 @@
             insert_at = if insert_at.length == 0 then 0 else insert_at[insert_at.length - 1]
 
             initers.splice insert_at, 0, alias: spec.alias, execute: spec.initializer
+          else if spec.initializer?
+            initers.push alias: spec.alias, execute: spec.initializer
 
           if typeof proto[underscore spec.ref] == 'undefined'
             if available[strip spec.ref]? == true
-              proto._do_add proto, available[strip spec.ref], spec.ref, next
+              proto._do_add proto, spec.ref, next
             else
               if spec.parent?
                 Madul.FIRE '$.Madul.search_root.load', { name: spec.name, alias: spec.alias, parent: spec.parent }
@@ -512,7 +623,13 @@
                   @_load_from_package_json proto, path, spec.name, spec.ref, next, =>
                     pth = LOCALS[proto.constructor.name]
 
-                    proto._check proto, pth, spec.name, spec.ref, next
+                    try
+                      proto._check proto, pth, spec.name, spec.ref, (err) =>
+                        if err?
+                          proto._check proto, "#{process.cwd()}/dist", spec.name, spec.ref, next
+                        else
+                          next()
+
           else
             next()
         , =>
