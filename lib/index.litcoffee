@@ -214,6 +214,7 @@
             proto._report method, state, id, data, breaker
 
       _prep_invocation: (proto, method, input, def) =>
+        out = [ ]
         id  = uuid.v4fast()
         res = proto._respond proto, method, id, def
         e   = (brk) =>
@@ -225,15 +226,9 @@
             error brk
 
         if Array.isArray input
-          input.push (out) => res 'resolve', out
-          input.push e
-          input.push (out) => res 'notify',  out
+          out = out.concat input
         else if typeof input == 'object'
-          input.done   = (out) => res 'resolve', out
-          input.fail   = e
-          input.update = (out) => res 'notify',  out
-
-          input = [ input ]
+          out.push input
         else
           msg = "input to #{proto.constructor.name}.#{method} must be an Array of Object"
 
@@ -241,9 +236,13 @@
 
           throw new Error msg
 
-        proto._report method, 'invoke', id, input
+        out.push (out) => res 'resolve', out
+        out.push e
+        out.push (out) => res 'notify',  out
 
-        input
+        proto._report method, 'invoke', id, out
+
+        out
 
       _process_decorators: (proto, type) =>
         if Array.isArray proto[type]
