@@ -346,7 +346,7 @@
 
             deduped = decs.filter (e, i, a) => a.indexOf(e) == i
 
-            Madul.FIRE '$.Madul.decorators.hydrate', deduped
+            proto.fire.call proto, 'decorators.hydrate', deduped
 
             handle_err = (fn, args, next, reject) =>
               (err) =>
@@ -594,7 +594,7 @@
               proto._do_add proto, spec.ref, next
             else
               if spec.parent?
-                Madul.FIRE '$.Madul.search_root.load', { name: spec.name, alias: spec.alias, parent: spec.parent }
+                proto.fire.call proto, 'search_root.load', { name: spec.name, alias: spec.alias, parent: spec.parent }
 
                 @_do_hydrate proto, [ spec.parent ], =>
                   if SEARCH_ROOTS[spec.parent] == undefined
