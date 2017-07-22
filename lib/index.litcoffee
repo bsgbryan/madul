@@ -605,13 +605,12 @@
                 key = @_find_require_key proto.constructor.name
 
                 async.eachSeries require.cache[key].paths, (path, nxt) =>
-                  @_load_from_package_json proto, path, spec.name, spec.ref, =>
+                  @_load_from_package_json proto, path, spec.name, spec.ref, nxt, =>
                     stop = new Error()
                     stop.break = true
 
                     next()
                     nxt stop
-                  , nxt
               else if spec.project_local
                 proto._check proto, LOCALS[proto.constructor.name], spec.name, spec.ref, next
               else
