@@ -279,6 +279,8 @@
 
             INITIALIZERS proto.constructor.name, method if method[0] == '$'
 
+            WRAPPED[proto.constructor.name].push method
+
             wrapped()
           else if typeof proto[method] == 'object'
 
@@ -350,102 +352,113 @@
             handle_err = (fn, args, next, reject) =>
               (err) =>
                 proto.warn.call proto, "#{fn}.validator.failed", args
-                reject err.message
+                reject err
 
                 stop = new Error()
                 stop.break = true
 
                 next stop
 
-            @_do_hydrate proto, deduped, =>
-              proto["_#{method}"] = proto[method]
+            @_do_hydrate proto, deduped, (errors) =>
+              if errors?
+                wrapped errors
+              else
+                proto["_#{method}"] = proto[method]
 
-              proto[method] = =>
-                def = q.defer()
-                me  = proto["_#{method}"]
+                proto[method] = =>
+                  def = q.defer()
+                  me  = proto["_#{method}"]
 
-                if args_format == 'ARRAY'
-                  args = Array.prototype.slice.call arguments
-                else if args_format == 'OBJECT'
-                  args = arguments[0]
-                else
-                  proto.warn.call proto, 'cannot-continue', 'No arg format specified'
+                  if args_format == 'ARRAY'
+                    args = Array.prototype.slice.call arguments
+                  else if args_format == 'OBJECT'
+                    args = arguments[0]
+                  else
+                    proto.warn.call proto, 'cannot-continue', 'No arg format specified'
 
-                  return def.reject 'No arg format specified'
+                    return def.reject 'No arg format specified'
 
-                before = @_process_decorators me, 'before'
-                after  = @_process_decorators me, 'after'
+                  before = @_process_decorators me, 'before'
+                  after  = @_process_decorators me, 'after'
 
-                q.Promise (resolve, reject) =>
-                  async.eachSeries me.validators, (v, next) =>
-                    arg       = Object.keys(v)[0]
-                    validator = v[arg]
-                    input     = arg
-                    prop      = args
-
-                    for a in arg.split '.'
-                      prop  = prop[a]
-                      input = a
-
-                    if Array.isArray validator
-                      async.eachSeries validator, (v, nxt) =>
-                        proto.fire.call proto, 'validator.execute', "#{v}": prop
-
-                        proto[v].EXECUTE.call proto[v], input, prop
-                          .then nxt
-                          .catch handle_err v, { "#{input}": prop }, nxt, reject
-                      , next
-                    else
-                      proto.fire.call proto, 'validator.execute', "#{validator}": prop
-
-                      proto[validator].EXECUTE.call proto[validator], input, prop
-                        .then next
-                        .catch handle_err v, { "#{input}": prop }, next, reject
-                  , resolve
-                .then =>
                   q.Promise (resolve, reject) =>
-                    async.eachSeries before, (b, next) =>
-                      proto.fire.call proto, 'before_filter.execute', "#{b}": args
+                    async.eachSeries me.validators, (v, next) =>
+                      arg       = Object.keys(v)[0]
+                      validator = v[arg]
+                      input     = arg
+                      prop      = args
 
-                      proto[b].before.call proto[b], args
-                        .then next
-                        .catch handle_err b, args, next, reject
-                    , resolve
-                .then =>
-                  input = proto._prep_invocation proto, method, args, def
+                      for a in arg.split '.'
+                        prop  = prop[a]
+                        input = a
 
-                  try
-                    me.behavior.apply me, input
-                  catch e
-                    failed = if input[0].fail? then input[0].fail else input[input.length - 2]
+                      if Array.isArray validator
+                        async.eachSeries validator, (v, nxt) =>
+                          proto.fire.call proto, 'validator.execute', "#{v}": prop
 
-                    me.warn.call me, 'runtime-exception', stack: e.stack, message: e.message
+                          proto[v].EXECUTE.call proto[v], input, prop
+                            .then nxt
+                            .catch handle_err v, { "#{input}": prop }, nxt, (err) =>
+                              reject err
+                              def.reject err
+                        , next
+                      else
+                        proto.fire.call proto, 'validator.execute', "#{validator}": prop
 
-                    failed e.message
-                .then (result) =>
-                  q.Promise (resolve, reject) =>
-                    if after.length > 0
-                      async.eachSeries after, (a, next) =>
-                        proto.fire.call proto, 'after_filter.execute', "#{a}": args
-
-                        proto[a].after.call proto[a], result
+                        proto[validator].EXECUTE.call proto[validator], input, prop
                           .then next
-                          .catch handle_err b, args, next, reject
-                      , => resolve result
-                    else
-                      process.nextTick => resolve result
-                .then  (out) => def.resolve out
-                .catch (err) => def.reject  err
+                          .catch handle_err v, { "#{input}": prop }, next, (err) =>
+                            reject err
+                            def.reject err
+                    , resolve
+                  .then =>
+                    q.Promise (resolve, reject) =>
+                      async.eachSeries before, (b, next) =>
+                        proto.fire.call proto, 'before_filter.execute', "#{b}": args
 
-                def.promise
+                        proto[b].before.call proto[b], args
+                          .then next
+                          .catch handle_err b, args, next, (err) =>
+                            reject err
+                            def.reject err
+                      , resolve
+                  .then =>
+                    input = proto._prep_invocation proto, method, args, def
 
-              INITIALIZERS proto.constructor.name, method if method[0] == '$'
+                    try
+                      me.behavior.apply me, input
+                    catch e
+                      failed = if input[0].fail? then input[0].fail else input[input.length - 2]
 
-              wrapped()
+                      me.warn.call me, 'runtime-exception', stack: e.stack, message: e.message
+
+                      failed e.message
+                  .then (result) =>
+                    q.Promise (resolve, reject) =>
+                      if after.length > 0
+                        async.eachSeries after, (a, next) =>
+                          proto.fire.call proto, 'after_filter.execute', "#{a}": args
+
+                          proto[a].after.call proto[a], result
+                            .then next
+                            .catch handle_err b, args, next, (err) =>
+                              reject err
+                              def.reject err
+                        , => resolve result
+                      else
+                        process.nextTick => resolve result
+                  .then  (out) => def.resolve out
+                  .catch (err) => def.reject  err
+
+                  def.promise
+
+                INITIALIZERS proto.constructor.name, method if method[0] == '$'
+
+                WRAPPED[proto.constructor.name].push method
+
+                wrapped()
           else
             proto.warn.call proto, 'cannot-wrap', method
-
-          WRAPPED[proto.constructor.name].push method
 
       _wrap_methods: (proto, callback) =>
         name    = proto.constructor.name
@@ -469,8 +482,22 @@
 
         async.each to_wrap.reverse(), (wrap, completed) =>
           async.each wrap.methods, (method, next) =>
-            wrap.proto._do_wrap wrap.proto, method, next
-          , => @_call_initializers_for wrap.proto, wrap.name, completed
+            wrap.proto._do_wrap wrap.proto, method, (errors) =>
+              if errors?
+                stop = new Error()
+                stop.break = true
+
+                next stop
+              else
+                next()
+          , (errors) =>
+            if errors?
+              stop = new Error()
+              stop.break = true
+
+              completed stop
+            else
+              @_call_initializers_for wrap.proto, wrap.name, completed
         , callback
 
       _make_available: (name, mod) =>
@@ -493,11 +520,17 @@
               HYDRATED[name]            = false
               HYRDATION_LISTENERS[name] = [ next ]
 
-              p._do_hydrate p, p.deps, =>
-                HYDRATED[name] = true
+              p._do_hydrate p, p.deps, (errors) =>
+                if errors?
+                  stop = new Error()
+                  stop.break = true
 
-                for listener in HYRDATION_LISTENERS[name]
-                  listener()
+                  next stop
+                else
+                  HYDRATED[name] = true
+
+                  for listener in HYRDATION_LISTENERS[name]
+                    listener()
             else if HYDRATED[name] == false
               HYRDATION_LISTENERS[name].push next
             else if HYDRATED[name] == true
@@ -506,7 +539,7 @@
             next()
         , done
 
-      _init_if_madul: (path, callback) =>
+      _init_if_madul: (path, done, fail) =>
         mod      = require path
         proto    = mod
         is_madul = false
@@ -524,14 +557,16 @@
         if is_madul
           new mod()
             .initialize()
-            .then callback
+            .then  done
+            .catch fail
         else
-          callback mod
+          done mod
 
-      _load: (me, name, path, loaded) =>
+      _load: (me, name, path, loaded, fail) =>
         me._init_if_madul path, (mod) =>
           me._make_available name, mod
           loaded mod
+        , fail
 
       _check: (me, path, dep, ref, finished) =>
         error = true
@@ -552,6 +587,11 @@
                   me._load me, ref, depth, (mod) =>
                     error = undefined
                     me._do_add me, ref, next
+                  , (err) =>
+                    stop = new Error()
+                    stop.break = true
+
+                    next stop
                 else
                   next()
             , => finished error
@@ -567,9 +607,15 @@
         me._init_if_madul path, (mod) =>
           me._make_available ref, mod
           me._do_add me, ref, next
+        , (err) =>
+          stop = new Error()
+          stop.break = true
+
+          next stop
 
       _do_hydrate: (proto, deps, hydration_complete) =>
         initers = [ ]
+        errors  = [ ]
 
         async.each deps, (d, next) =>
           spec = Madul.PARSE_SPEC d
@@ -595,23 +641,48 @@
               if spec.parent?
                 proto.fire.call proto, 'search_root.load', { name: spec.name, alias: spec.alias, parent: spec.parent }
 
-                @_do_hydrate proto, [ spec.parent ], =>
-                  if SEARCH_ROOTS[spec.parent] == undefined
-                    SEARCH_ROOTS[spec.parent] = @_find_code_root spec.parent
+                @_do_hydrate proto, [ spec.parent ], (errors) =>
+                  if errors?
+                    stop = new Error()
+                    stop.break = true
 
-                  proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, next
+                    next stop
+                  else
+                    if SEARCH_ROOTS[spec.parent] == undefined
+                      SEARCH_ROOTS[spec.parent] = @_find_code_root spec.parent
+
+                    proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, next
               else if spec.node_local
                 key = @_find_require_key proto.constructor.name
 
                 async.eachSeries require.cache[key].paths, (path, nxt) =>
                   @_load_from_package_json proto, path, spec.name, spec.ref, nxt, =>
-                    stop = new Error()
+                    details = not_found: spec.name
+                    stop    = new Error()
+
                     stop.break = true
+
+                    proto.warn.call proto, 'hydrating', details
+
+                    errors.push(details)
 
                     next()
                     nxt stop
               else if spec.project_local
-                proto._check proto, LOCALS[proto.constructor.name], spec.name, spec.ref, next
+                proto._check proto, LOCALS[proto.constructor.name], spec.name, spec.ref, (err) =>
+                  if err?
+                    details = not_found: spec.name
+                    stop    = new Error()
+
+                    stop.break = true
+
+                    proto.warn.call proto, 'hydrating', details
+
+                    errors.push(details)
+
+                    next stop
+                  else
+                    next()
               else
                 try
                   proto._add proto, spec.ref, spec.name, next
@@ -630,10 +701,15 @@
 
           else
             next()
-        , =>
-          async.eachSeries initers, (initer, next) =>
-            proto[initer.execute].apply(@).then next
-          , hydration_complete
+        , (err) =>
+          if err?
+            proto.warn.call proto, 'hydration.halt', errors
+
+            hydration_complete errors
+          else
+            async.eachSeries initers, (initer, next) =>
+              proto[initer.execute].apply(@).then next
+            , hydration_complete
 
       _load_from_package_json: (proto, path, name, ref, success, fail) =>
         pkg = "#{path}/#{name}/package.json"
@@ -714,7 +790,15 @@
           if LOCALS[name] == undefined
             LOCALS[name] = @_find_code_root name
 
-          @_hydrate_deps proto, => @_wrap_methods proto, => @_finish_up proto
+          @_hydrate_deps proto, (errors) =>
+            if errors?
+              deferred.reject errors
+            else
+              @_wrap_methods proto, (err) =>
+                if err?
+                  deferred.reject err
+                else
+                  @_finish_up proto
         else if initialized[name] == false
           listeners[name].push deferred.resolve
         else if initialized[name] == true
