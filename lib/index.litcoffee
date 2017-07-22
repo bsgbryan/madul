@@ -351,7 +351,7 @@
             handle_err = (fn, args, next, reject) =>
               (err) =>
                 proto.warn.call proto, "#{fn}.validator.failed", args
-                reject err
+                reject err.message
 
                 stop = new Error()
                 stop.break = true
