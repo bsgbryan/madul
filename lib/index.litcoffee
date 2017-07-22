@@ -551,8 +551,8 @@
                   me._check me, depth, dep, ref, next
                 else if s.isFile() && f.substring(0, f.length - 3) == dep
                   me._load me, ref, depth, (mod) =>
-                    me._do_add me, ref, next
                     error = undefined
+                    me._do_add me, ref, next
                 else
                   next()
             , => finished error
