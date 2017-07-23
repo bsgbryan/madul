@@ -62,9 +62,9 @@
       [project_local, node_local, name] = determine_local tokens[0].trim()
 
       if tokens.length == 2
-        alias = tokens[1].trim()
+        alias = underscore tokens[1].trim()
       else if tokens.length == 1
-        alias = name
+        alias = underscore name
       else
         return Madul.FIRE '!.Madul.dependency_spec.alias.invalid', tokens[1]
 
@@ -118,6 +118,14 @@
 
         "\n  #{name}\n    #{props.filter((e) -> e?).join '\n    '}"
 
+      @DUMMY: (deps, cb) ->
+        class __DUMMY__ extends Madul
+          deps: deps
+
+        new __DUMMY__()
+          .initialize()
+          .then cb
+
       @LISTEN: (event, callback) => emitter.on event, callback
 
       @FIRE: (event, args) => emitter.emit event, args
@@ -145,7 +153,7 @@
         else if tokens.length > 2
           return Madul.FIRE '!.Madul.dependency_spec.invalid', d
 
-        { ref: alias || name, alias, name, parent, initializer, prerequisites, project_local, node_local }
+        { ref: alias || underscore(name), alias, name, parent, initializer, prerequisites, project_local, node_local }
 
       @BUILD_SPEC: ({ search_root, name, alias, initializer, prerequisites }) =>
         unless name?
@@ -411,6 +419,7 @@
                             reject err
                             def.reject err
                     , resolve
+                  .catch (err) => def.reject err
                   .then =>
                     q.Promise (resolve, reject) =>
                       async.eachSeries before, (b, next) =>
@@ -422,17 +431,21 @@
                             reject err
                             def.reject err
                       , resolve
+                  .catch (err) => def.reject err
                   .then =>
-                    input = proto._prep_invocation proto, method, args, def
+                    q.Promise (resolve, reject) =>
+                      d     = q.defer()
+                      input = proto._prep_invocation proto, method, args, d
 
-                    try
-                      me.behavior.apply me, input
-                    catch e
-                      failed = if input[0].fail? then input[0].fail else input[input.length - 2]
+                      try
+                        me.behavior.apply proto, input
+                          .then  (out) => resolve out
+                          .catch (err) => reject  err
+                      catch e
+                        me.warn.call me, 'runtime-exception', stack: e.stack, message: e.message
 
-                      me.warn.call me, 'runtime-exception', stack: e.stack, message: e.message
-
-                      failed e.message
+                        reject e
+                  .catch (err) => def.reject err
                   .then (result) =>
                     q.Promise (resolve, reject) =>
                       if after.length > 0
@@ -472,7 +485,10 @@
                typeof proto["_#{prop}"] == 'undefined' &&
                WRAP(name, prop)         == true
 
-              continue if proto.deps? && proto.deps.indexOf(prop.replace(/_/g, '-')) > -1
+              if proto.deps?
+                filtered = proto.deps.filter (d) => Madul.PARSE_SPEC(d).name == prop.replace /_/g, '-'
+
+                continue if filtered.length > 0
 
               if typeof body == 'function' || typeof body?.behavior == 'function'
                 to_wrap[to_wrap.length - 1].methods.push prop
@@ -501,7 +517,7 @@
         , callback
 
       _make_available: (name, mod) =>
-        Madul.FIRE "$.#{name}.available"
+        Madul.FIRE "$.#{strip name}.available"
 
         available[strip name] = mod
 
@@ -557,41 +573,43 @@
         if is_madul
           new mod()
             .initialize()
-            .then  done
-            .catch fail
+            .then  (m)   => done m
+            .catch (err) => fail err
         else
           done mod
 
       _load: (me, name, path, loaded, fail) =>
         me._init_if_madul path, (mod) =>
           me._make_available name, mod
-          loaded mod
+          loaded()
         , fail
 
       _check: (me, path, dep, ref, finished) =>
-        error = true
-
         fs.readdir path, (err, files) =>
           if err?
             me.warn 'file-not-found', err
 
             finished 'NOT_FOUND'
           else
-            async.each files, (f, next) =>
+            error   = true
+            checked = 0
+
+            async.eachOfSeries files, (f, i, next) =>
               depth = "#{path}/#{f}"
 
               fs.stat depth, (e, s) =>
                 if s.isDirectory() && f[0] != '.'
-                  me._check me, depth, dep, ref, next
+                  me._check me, depth, dep, ref, => next()
                 else if s.isFile() && f.substring(0, f.length - 3) == dep
-                  me._load me, ref, depth, (mod) =>
-                    error = undefined
-                    me._do_add me, ref, next
-                  , (err) =>
-                    stop = new Error()
-                    stop.break = true
+                  stop  = new Error()
+                  stop.break = true
 
-                    next stop
+                  me._load me, ref, depth, =>
+                    error  = undefined
+                    loaded = true
+
+                    me._do_add me, ref, => next stop
+                  , (err) => next stop
                 else
                   next()
             , => finished error
@@ -601,7 +619,7 @@
 
         me[underscore ref] = available[strip ref]
 
-        next()
+        next() if typeof next == 'function'
 
       _add: (me, ref, path, next) =>
         me._init_if_madul path, (mod) =>
@@ -617,7 +635,7 @@
         initers = [ ]
         errors  = [ ]
 
-        async.each deps, (d, next) =>
+        async.eachSeries deps, (d, next) =>
           spec = Madul.PARSE_SPEC d
 
           if spec.prerequisites?
@@ -639,35 +657,46 @@
               proto._do_add proto, spec.ref, next
             else
               if spec.parent?
-                proto.fire.call proto, 'search_root.load', { name: spec.name, alias: spec.alias, parent: spec.parent }
+                if proto[spec.parent]?
+                  proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, (err) =>
+                    if err?
+                      deep = "#{SEARCH_ROOTS[spec.parent]}/node_modules/#{spec.parent}/dist"
 
-                @_do_hydrate proto, [ spec.parent ], (errors) =>
-                  if errors?
-                    stop = new Error()
-                    stop.break = true
+                      proto._check proto, deep, spec.name, spec.ref, (e) =>
+                        next()
+                    else
+                      next()
+                else
+                  proto.fire.call proto, 'search_root.load', { name: spec.name, alias: spec.alias, parent: spec.parent }
 
-                    next stop
-                  else
-                    if SEARCH_ROOTS[spec.parent] == undefined
-                      SEARCH_ROOTS[spec.parent] = @_find_code_root spec.parent
+                  @_do_hydrate proto, [ spec.parent ], (errors) =>
+                    if errors?
+                      stop = new Error()
+                      stop.break = true
 
-                    proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, next
+                      next stop
+                    else
+                      if SEARCH_ROOTS[spec.parent] == undefined
+                        SEARCH_ROOTS[spec.parent] = @_find_code_root spec.parent
+
+                      proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, (err) =>
+                        if err?
+                          deep = "#{SEARCH_ROOTS[spec.parent]}/node_modules/#{spec.parent}/dist"
+
+                          proto._check proto, deep, spec.name, spec.ref, (e) =>
+                            next()
+                        else
+                          next()
               else if spec.node_local
                 key = @_find_require_key proto.constructor.name
 
                 async.eachSeries require.cache[key].paths, (path, nxt) =>
-                  @_load_from_package_json proto, path, spec.name, spec.ref, nxt, =>
-                    details = not_found: spec.name
-                    stop    = new Error()
-
-                    stop.break = true
-
-                    proto.warn.call proto, 'hydrating', details
-
-                    errors.push(details)
-
-                    next()
-                    nxt stop
+                  @_load_from_package_json proto, path, spec.name, spec.ref, =>
+                    nxt()
+                  , =>
+                    nxt()
+                , =>
+                  next()
               else if spec.project_local
                 proto._check proto, LOCALS[proto.constructor.name], spec.name, spec.ref, (err) =>
                   if err?
@@ -702,7 +731,7 @@
           else
             next()
         , (err) =>
-          if err?
+          if err?.length > 0
             proto.warn.call proto, 'hydration.halt', errors
 
             hydration_complete errors
@@ -711,11 +740,12 @@
               proto[initer.execute].apply(@).then next
             , hydration_complete
 
-      _load_from_package_json: (proto, path, name, ref, success, fail) =>
+      _load_from_package_json: (proto, path, name, ref, success, next) =>
         pkg = "#{path}/#{name}/package.json"
-
         fs.stat pkg, (err, stat) =>
-          if stat?.isFile()
+          if err?
+            next()
+          else if stat.isFile()
             fs.readFile pkg, 'utf8', (err, data) =>
               json = JSON.parse data
               main = json.main || json._main || 'index.js'
@@ -723,7 +753,7 @@
 
               proto._add proto, ref, path, success
           else
-            fail()
+            next()
 
       _finish_up: (proto, args) =>
         name = proto.constructor.name
@@ -763,9 +793,12 @@
           if key.replace(/_/g, '').toLowerCase().includes file
             cb key
 
-        found
-          .filter (f) => f?
-          .sort((a, b) => a.length - b.length)[0]
+        filtered = found.filter (f) => f?
+
+        if filtered.length > 0
+          filtered.sort((a, b) => a.length - b.length)[0]
+        else
+          [ ]
 
       _find_require_key: (resource) =>
         @_do_find resource, (key) => key
