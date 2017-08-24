@@ -652,12 +652,20 @@
             else
               if spec.parent?
                 if proto[spec.parent]?
-                  proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, (err) =>
-                    if err?
-                      deep = "#{SEARCH_ROOTS[spec.parent]}/node_modules/#{spec.parent}/dist"
+                  deep = SEARCH_ROOTS[spec.parent]
 
-                      proto._check proto, deep, spec.name, spec.ref, (e) =>
-                        next()
+                  proto._check proto, deep, spec.name, spec.ref, (err) =>
+                    if err == 'NOT_FOUND'
+                      proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, (err) =>
+                        if err?
+                          stop = new Error()
+                          stop.break = true
+
+                          proto.warn.call proto, 'not-found', dep: d
+
+                          next stop
+                        else
+                          next()
                     else
                       next()
                 else
@@ -673,12 +681,20 @@
                       if SEARCH_ROOTS[spec.parent] == undefined
                         SEARCH_ROOTS[spec.parent] = @_find_code_root spec.parent
 
-                      proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, (err) =>
-                        if err?
-                          deep = "#{SEARCH_ROOTS[spec.parent]}/node_modules/#{spec.parent}/dist"
+                      deep = SEARCH_ROOTS[spec.parent]
 
-                          proto._check proto, deep, spec.name, spec.ref, (e) =>
-                            next()
+                      proto._check proto, deep, spec.name, spec.ref, (err) =>
+                        if err == 'NOT_FOUND'
+                          proto._check proto, SEARCH_ROOTS[spec.parent], spec.name, spec.ref, (err) =>
+                            if err?
+                              stop = new Error()
+                              stop.break = true
+
+                              proto.warn.call proto, 'not-found', dep: d
+
+                              next stop
+                            else
+                              next()
                         else
                           next()
               else if spec.node_local
