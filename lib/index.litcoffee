@@ -598,7 +598,7 @@
               depth = "#{path}/#{f}"
 
               fs.stat depth, (e, s) =>
-                if s.isDirectory() && f[0] != '.'
+                if s.isDirectory() && f[0] != '.' && f != 'node_modules'
                   me._check me, depth, dep, ref, => next()
                 else if s.isFile() && f.substring(0, f.length - 3) == dep
                   stop  = new Error()
