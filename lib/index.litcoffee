@@ -831,7 +831,10 @@
           listeners[name]   = [ deferred.resolve ]
 
           if LOCALS[name] == undefined
-            LOCALS[name] = @_find_code_root name
+            if name == '__DUMMY__'
+              LOCALS[name] = "#{process.cwd()}/dist"
+            else
+              LOCALS[name] = @_find_code_root name
 
           @_hydrate_deps proto, (errors) =>
             if errors?
