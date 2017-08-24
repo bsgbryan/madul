@@ -591,10 +591,7 @@
 
             finished 'NOT_FOUND'
           else
-            error   = true
-            checked = 0
-
-            async.eachOfSeries files, (f, i, next) =>
+            async.eachSeries files, (f, next) =>
               depth = "#{path}/#{f}"
 
               fs.stat depth, (e, s) =>
@@ -605,14 +602,11 @@
                   stop.break = true
 
                   me._load me, ref, depth, =>
-                    error  = undefined
-                    loaded = true
-
                     me._do_add me, ref, => next stop
                   , (err) => next stop
                 else
                   next()
-            , => finished error
+            , => finished()
 
       _do_add: (me, ref, next) =>
         Madul.FIRE "$.#{me.constructor.name}.dependency.register", ref
