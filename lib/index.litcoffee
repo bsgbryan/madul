@@ -418,8 +418,7 @@
                           .catch handle_err v, { "#{input}": prop }, next, (err) =>
                             reject err
                             def.reject err
-                    , resolve
-                  .catch (err) => def.reject err
+                    , => resolve()
                   .then =>
                     q.Promise (resolve, reject) =>
                       async.eachSeries before, (b, next) =>
@@ -430,8 +429,7 @@
                           .catch handle_err b, args, next, (err) =>
                             reject err
                             def.reject err
-                      , resolve
-                  .catch (err) => def.reject err
+                      , => resolve()
                   .then =>
                     q.Promise (resolve, reject) =>
                       input = proto._prep_invocation proto, method, args, { resolve, reject }
@@ -442,7 +440,6 @@
                         me.warn.call me, 'runtime-exception', stack: e.stack, message: e.message
 
                         reject e
-                  .catch (err) => def.reject err
                   .then (result) =>
                     q.Promise (resolve, reject) =>
                       if after.length > 0
