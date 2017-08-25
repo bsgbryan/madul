@@ -434,13 +434,10 @@
                   .catch (err) => def.reject err
                   .then =>
                     q.Promise (resolve, reject) =>
-                      d     = q.defer()
-                      input = proto._prep_invocation proto, method, args, d
+                      input = proto._prep_invocation proto, method, args, { resolve, reject }
 
                       try
                         me.behavior.apply proto, input
-                          .then  (out) => resolve out
-                          .catch (err) => reject  err
                       catch e
                         me.warn.call me, 'runtime-exception', stack: e.stack, message: e.message
 
