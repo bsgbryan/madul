@@ -808,7 +808,7 @@
         @_do_find resource, (key) => key
 
       _find_code_root: (resource) =>
-        @_do_find resource, (key) => key.substring(0, key.lastIndexOf '/').split '/'
+        @_do_find resource, (key) => key.substring(0, key.lastIndexOf('dist') + 4).split '/'
           .join '/'
 
       initialize: =>
