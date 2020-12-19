@@ -1,13 +1,12 @@
-import chai from 'chai'
-const { expect } = chai
+const { expect } = require('chai')
 
-import {
+const {
   SCOPE,
   parse,
   build,
   extractScopeAndHandleFrom,
   extractInitializerAndPrerequisites
-} from '../lib/DependencySpec.js'
+} = require('../lib/DependencySpec')
 
 
 describe('DependencySpec', () => {

@@ -1,6 +1,5 @@
 {
   "name": "madul",
-  "type": "module",
   "version": "1.6.1",
   "description": "A simple tool that makes writing async code fun & easy",
   "files": [
