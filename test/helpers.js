@@ -4,7 +4,7 @@ const {
   executeAndDelete
 } = require('../lib/helpers')
 
-describe.only('helpers', () => {
+describe('helpers', () => {
   describe('executeAndDelete', () => {
     it('is a function', () =>
       expect(executeAndDelete).to.be.a('function')
