@@ -8,7 +8,7 @@ const {
 
 const foo = { bar: function() { } }
 
-describe.only('MethodWrapper', () => {
+describe('MethodWrapper', () => {
   describe('wrap', () => {
     it('is a function', () =>
       expect(wrap).to.be.a('function')

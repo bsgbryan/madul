@@ -22,7 +22,7 @@ describe('DependencySpec', () => {
     })
 
     it('returns SCOPE.LOCAL when . is specified', () => {
-      const [scope, _] = extractScopeAndHandleFrom('.test')
+      const [scope, _] = extractScopeAndHandleFrom('/test')
 
       expect(scope).to.equal(SCOPE.LOCAL)
     })
@@ -151,7 +151,7 @@ describe('DependencySpec', () => {
     })
 
     it('returns the correct data when a handle, scope, initializer, and prerequisites are specified', () => {
-      const parsed = parse('.test = init:foo,bar')
+      const parsed = parse('/test = init:foo,bar')
 
       expect(parsed.ref).to.equal('test')
       expect(parsed.alias).to.be.undefined
@@ -164,7 +164,7 @@ describe('DependencySpec', () => {
     })
 
     it('ignores whitespace', () => {
-      const parsed = parse(' . test   = init : foo ,     bar ')
+      const parsed = parse(' / test   = init : foo ,     bar ')
 
       expect(parsed.ref).to.equal('test')
       expect(parsed.alias).to.be.undefined

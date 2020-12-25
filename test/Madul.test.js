@@ -1,22 +1,11 @@
 const { expect } = require('chai')
 
-const {
-  Madul,
-  initialize
-} = require('../lib/Madul')
-
-class Test extends Madul {
-  deps = ['fs', 'path']
-}
+const initialize = require('../lib/Madul')
 
 describe('Madul', () => {
-  it('is a named class', () =>
-    expect(Madul.prototype.constructor.name).to.equal('Madul')
-  )
-
-  it('does ... something', async () => {
-    const test = await initialize(Test)
-
-    // console.log(test.deps)
+  describe('initialize', () => {
+    it('is a function', () =>
+      expect(initialize).to.be.a('function')
+    )
   })
 })
