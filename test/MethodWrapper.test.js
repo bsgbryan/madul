@@ -5,11 +5,19 @@ const {
   doWrap
 } = require('../lib/MethodWrapper')
 
+const foo = { bar: () => { } }
+
 describe.only('MethodWrapper', () => {
   describe('wrap', () => {
     it('is a function', () =>
       expect(wrap).to.be.a('function')
     )
+
+    it('returns a Promise', () => {
+      const fn = Object.getPrototypeOf(wrap(foo)).constructor
+
+      expect(fn.name).to.equal('Promise')
+    })
 
     it('wraps all methods on an object', async () => {
       const test = {
@@ -36,13 +44,14 @@ describe.only('MethodWrapper', () => {
 
     it('does not wrap properties that are not functions', async () => {
       const test = {
+        ...foo,
         $init: false,
-        foo: 4,
+        baz:   4,
       }
 
       const wrapped = await wrap(test)
 
-      expect(wrapped.foo).to.equal(4)
+      expect(wrapped.baz).to.equal(4)
       expect(wrapped.$init).to.be.false
     })
 
@@ -73,5 +82,11 @@ describe.only('MethodWrapper', () => {
     it('is a function', () =>
       expect(doWrap).to.be.a('function')
     )
+
+    it('returns an AsyncFunction', () => {
+      const fn = Object.getPrototypeOf(doWrap()).constructor
+
+      expect(fn.name).to.equal('AsyncFunction')
+    })
   })
 })
