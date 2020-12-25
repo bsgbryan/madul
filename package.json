@@ -4,7 +4,7 @@
   "description": "A simple tool that makes writing async code fun & easy",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha --watch"
   },
   "keywords": [
     "async",
