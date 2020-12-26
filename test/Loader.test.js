@@ -3,7 +3,7 @@ const { expect } = require('chai')
 const { SCOPE } = require('../lib/DependencySpec')
 const   load    = require('../lib/Loader')
 
-describe.only('Loader', () => {
+describe('Loader', () => {
   describe('load', () => {
     it('is a function', () =>
       expect(load).to.be.a('function')
