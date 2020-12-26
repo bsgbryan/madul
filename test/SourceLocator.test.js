@@ -7,7 +7,7 @@ const {
   fromNodeModules,
 } = require('../lib/SourceLocator')
 
-describe.only('SourceLocator', () => {
+describe('SourceLocator', () => {
   describe('fromNodeModules', () => {
     it('is a function', () =>
       expect(fromNodeModules).to.be.a('function')
