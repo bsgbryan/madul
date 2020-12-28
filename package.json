@@ -26,9 +26,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "^3.2.0",
-    "eventemitter2": "^6.4.3",
-    "microtime": "^3.0.0",
-    "uuid-1345": "^1.0.2"
+    "eventemitter2": "^6.4.3"
   },
   "devDependencies": {
     "chai": "^4.2.0",

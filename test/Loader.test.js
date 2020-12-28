@@ -10,10 +10,10 @@ describe('Loader', () => {
     )
 
     it("wraps a madul's source in a function call that passes all sdk functions", async () => {
-      const { madul } = await load('example', SCOPE.LOCAL)
+      const madul = await load('example', SCOPE.LOCAL)
 
       madul.baz({
-        done: log => expect(log).to.be.a('function')
+        done: sdk => expect(sdk.events.log).to.be.a('function')
       })
     })
   })

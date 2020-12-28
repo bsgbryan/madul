@@ -163,6 +163,23 @@ describe('DependencySpec', () => {
       expect(parsed.prerequisites[1]).to.equal('bar')
     })
 
+    it('returns the correct data when functions are specified', () => {
+      const parsed = parse('test[foo,bar,baz,bang]')
+
+      expect(parsed.ref).to.equal('test')
+      expect(parsed.functions.length).to.equal(4)
+      expect(parsed.functions[0]).to.equal('foo')
+      expect(parsed.functions[1]).to.equal('bar')
+      expect(parsed.functions[2]).to.equal('baz')
+      expect(parsed.functions[3]).to.equal('bang')
+
+      expect(parsed.alias).to.be.undefined
+      expect(parsed.scope).to.equal(SCOPE.DEFAULT)
+      expect(parsed.handle).to.equal('test')
+      expect(parsed.initializer).to.be.undefined
+      expect(parsed.prerequisites.length).to.equal(0)
+    })
+
     it('ignores whitespace', () => {
       const parsed = parse(' / test   = init : foo ,     bar ')
 
@@ -184,19 +201,13 @@ describe('DependencySpec', () => {
 
     describe('The handle argument', () => {
       it('is required', () =>
-        expect(
-          build({
-            handle: undefined
-          })
-        ).to.be.false
+        expect(() => build({ handle: undefined })).
+        to.throw('A non-empty handle is required to create a Dependency Spec')
       )
 
       it('is the only ouput token when it is the only input token', () =>
-        expect(
-          build({
-            handle: 'test'
-          })
-        ).to.equal('test')
+        expect(build({ handle: 'test' })).
+        to.equal('test')
       )
 
       it('immediately precedes the alias when one is specified', () =>
@@ -281,11 +292,12 @@ describe('DependencySpec', () => {
     describe('The prerequisites argument', () => {
       it('requires an initializer to be specified', () =>
         expect(
-          build({
+          () => build({
             handle:        'test',
+            initializer:    undefined,
             prerequisites: ['foo']
           })
-        ).to.be.false
+        ).to.throw('Prerequisites require an initializer')
       )
 
       it('immediately follows the initializer when one is specified', () =>
