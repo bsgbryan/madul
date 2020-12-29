@@ -39,4 +39,4 @@ const iterable = list => {
   }
 }
 
-exports = iterable
+module.exports = iterable

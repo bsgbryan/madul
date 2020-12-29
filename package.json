@@ -2,7 +2,16 @@
   "name": "madul",
   "version": "2.0.0",
   "description": "A simple tool that makes writing async code fun & easy",
-  "main": "index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./initialize": "./lib/Initializer.js",
+    "./dependencySpec": "./lib/DependencySpec.js",
+    "./events": "./sdk/Events.js",
+    "./iterable": "./sdk/Iterable.js"
+  },
+  "files": [
+    "lib"
+  ],
   "scripts": {
     "test": "mocha --watch"
   },

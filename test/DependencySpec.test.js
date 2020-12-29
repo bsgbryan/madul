@@ -4,37 +4,31 @@ const {
   SCOPE,
   parse,
   build,
-  extractScopeAndHandleFrom,
-  extractInitializerAndPrerequisites
 } = require('../lib/DependencySpec')
 
+const extractScopeAndHandle              = require('../lib/DependencySpec/extractScopeAndHandle')
+const extractInitializerAndPrerequisites = require('../lib/DependencySpec/extractInitializerAndPrerequisites')
 
 describe('DependencySpec', () => {
-  describe('extractScopeAndHandleFrom', () => {
+  describe('extractScopeAndHandle', () => {
     it('is a function', () =>
-      expect(extractScopeAndHandleFrom).to.be.a('function')
+      expect(extractScopeAndHandle).to.be.a('function')
     )
 
-    it('returns SCOPE.NODE when the ~ is specified', () => {
-      const [scope, _] = extractScopeAndHandleFrom('~test')
-
-      expect(scope).to.equal(SCOPE.NODE)
-    })
-
     it('returns SCOPE.LOCAL when . is specified', () => {
-      const [scope, _] = extractScopeAndHandleFrom('/test')
+      const [scope, _] = extractScopeAndHandle('/test', SCOPE)
 
       expect(scope).to.equal(SCOPE.LOCAL)
     })
 
     it('returns SCOPE.DEFAULT when nothing is specified', () => {
-      const [scope, _] = extractScopeAndHandleFrom('test')
+      const [scope, _] = extractScopeAndHandle('test', SCOPE)
 
       expect(scope).to.equal(SCOPE.DEFAULT)
     })
 
     it('returns the value of the handle specified', () => {
-      const [_, handle] = extractScopeAndHandleFrom('~test')
+      const [_, handle] = extractScopeAndHandle('/test', SCOPE)
 
       expect(handle).to.equal('test')
     })
@@ -90,11 +84,11 @@ describe('DependencySpec', () => {
     })
 
     it('returns the correct data when a handle and scope are specified', () => {
-      const parsed = parse('~test')
+      const parsed = parse('/test')
 
       expect(parsed.ref).to.equal('test')
       expect(parsed.alias).to.be.undefined
-      expect(parsed.scope).to.equal(SCOPE.NODE)
+      expect(parsed.scope).to.equal(SCOPE.LOCAL)
       expect(parsed.handle).to.equal('test')
       expect(parsed.initializer).to.be.undefined
       expect(parsed.prerequisites.length).to.equal(0)

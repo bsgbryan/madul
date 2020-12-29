@@ -15,29 +15,29 @@ describe('MethodWrapper', () => {
     )
 
     it('returns a Promise', () => {
-      const fn = Object.getPrototypeOf(wrap(foo)).constructor
+      const fn = Object.getPrototypeOf(wrap('test', foo)).constructor
 
       expect(fn.name).to.equal('Promise')
     })
 
     it('wraps all methods on an object', async () => {
       const test = {
-        $init: function({ done, fail }) {
+        $init: function({ done, progress }) {
           expect(done).to.be.a('function')
-          expect(fail).to.be.a('function')
+          expect(progress).to.be.a('function')
 
           done()
         },
-        foo: function({ testParam, done, fail }) {
+        foo: function({ testParam, done, progress }) {
           expect(testParam).to.equal('bar')
           expect(done).to.be.a('function')
-          expect(fail).to.be.a('function')
+          expect(progress).to.be.a('function')
 
           done()
         }
       }
 
-      const wrapped = await wrap(test)
+      const wrapped = await wrap('test', test)
 
       await wrapped.$init()
       await wrapped.foo({ testParam: 'bar' })
@@ -50,7 +50,7 @@ describe('MethodWrapper', () => {
         baz:   4,
       }
 
-      const wrapped = await wrap(test)
+      const wrapped = await wrap('test', test)
 
       expect(wrapped.baz).to.equal(4)
       expect(wrapped.$init).to.be.false
@@ -62,7 +62,7 @@ describe('MethodWrapper', () => {
         foo:   function() { }
       }
 
-      const wrapped = await wrap(test)
+      const wrapped = await wrap('test', test)
 
       expect(Object.isFrozen(wrapped)).to.be.true
     })
@@ -73,7 +73,7 @@ describe('MethodWrapper', () => {
         bar:  function() { return 'Not wrapped' },
       }
 
-      const wrapped = await wrap(test)
+      const wrapped = await wrap('test', test)
 
       expect(wrapped.bar()).to.equal('Not wrapped')
     })
@@ -85,13 +85,13 @@ describe('MethodWrapper', () => {
     )
 
     it('returns an AsyncFunction', () => {
-      const fn = Object.getPrototypeOf(doWrap()).constructor
+      const fn = Object.getPrototypeOf(doWrap('test', )).constructor
 
       expect(fn.name).to.equal('AsyncFunction')
     })
 
     it('returns a Promise from the returned AsyncFunction', () => {
-      const fn = Object.getPrototypeOf(doWrap()()).constructor
+      const fn = Object.getPrototypeOf(doWrap('test', )()).constructor
 
       expect(fn.name).to.equal('Promise')
     })
@@ -99,7 +99,7 @@ describe('MethodWrapper', () => {
     it('invokes the specified property, using the passed output as "this"', async () => {
       const output   = { foo: 4 }
       const instance = { bar: function({ done }) { done(this.foo) } }
-      const wrapped  = doWrap(instance, 'bar', output)
+      const wrapped  = doWrap('test', instance, 'bar', output)
       const result   = await wrapped()
 
       expect(result).to.equal(output.foo)
@@ -108,7 +108,7 @@ describe('MethodWrapper', () => {
     it('passes params through to the wrapped function', async () => {
       const output   = { }
       const instance = { bar: ({ example, done }) => done(example) }
-      const wrapped  = doWrap(instance, 'bar', output)
+      const wrapped  = doWrap('test', instance, 'bar', output)
       const result   = await wrapped({ example: 'param' })
 
       expect(result).to.equal('param')
@@ -117,7 +117,7 @@ describe('MethodWrapper', () => {
     it('rejects the Promise when the wrapped function throws an error', async () => {
       const output   = { }
       const instance = { bar: () => { throw new Error('BOOM') } }
-      const wrapped  = doWrap(instance, 'bar', output)
+      const wrapped  = doWrap('test', instance, 'bar', output)
 
       try {
         await wrapped()
@@ -126,22 +126,10 @@ describe('MethodWrapper', () => {
       }
     })
 
-    it('rejects the Promise when the wrapped function calls fail', async () => {
-      const output   = { }
-      const instance = { bar: ({ fail }) => fail('Bahg, bada BOOM') }
-      const wrapped  = doWrap(instance, 'bar', output)
-
-      try {
-        await wrapped()
-      } catch (e) {
-        expect(e.message).to.equal('Bahg, bada BOOM')
-      }
-    })
-
     it('resolves the Promise when done is called', async () => {
       const output   = { }
       const instance = { bar: ({ done }) => done('whew!') }
-      const wrapped  = doWrap(instance, 'bar', output)
+      const wrapped  = doWrap('test', instance, 'bar', output)
       const result   = await wrapped()
 
       expect(result).to.equal('whew!')

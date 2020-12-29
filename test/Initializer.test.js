@@ -1,10 +1,7 @@
 const { expect } = require('chai')
 
-const initialize  = require('../lib/Initializer')
-
-const {
-  execute$,
-} = initialize
+const initialize = require('../lib/Initializer')
+const execute$   = require('../lib/Initializer/execute$')
 
 describe('Madul', () => {
   describe('execute$', () => {
