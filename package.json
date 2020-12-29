@@ -4,8 +4,8 @@
   "description": "A simple tool that makes writing async code fun & easy",
   "exports": {
     ".": "./lib/index.js",
-    "./initialize": "./lib/Initializer.js",
-    "./dependencySpec": "./lib/DependencySpec.js",
+    "./initialize": "./lib/Initializer/index.js",
+    "./dependencySpec": "./lib/DependencySpec/index.js",
     "./events": "./sdk/Events.js",
     "./iterable": "./sdk/Iterable.js"
   },
