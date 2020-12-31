@@ -29,7 +29,7 @@ exports = madul
 
 1. We define and export a plain old Node.js module
 1. The `moment` and `db` (_a file local to the project, denoted by the `/`_) dependencies are loaded asynchronously
-1. The `$init` method is gauranteed to be executed after `madul` has fully loaded, but before it's available for use; so you know that the `db` dependency will be properly setup and connected to
+1. The `$init` method is guaranteed to be executed after `madul` has fully loaded, but before it's available for use; so you know that the `db` dependency will be properly setup and connected to
 1. We have a nice, consistent way to define and deal with `async` behavior without being bound by the strict flow rules of `async/await`. (_The `done` callback lets us "return" from our functions in a more Promise-like way, which can be super convenient, without have to add any Promise-related cruft to our code_)
 
 ### Bugs/feature requests
