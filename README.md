@@ -12,7 +12,7 @@ const madul = {
 
     done()
   },
-  query: async function({ timestamp, friends, done }) {
+  query: async function({ timestamp, friend, done }) {
     const allMessages  = await this.db.getAllMessagesBefore({ timestamp })
     const fromMyFriend = await this.db.getMessagesFrom({ friend })
 
