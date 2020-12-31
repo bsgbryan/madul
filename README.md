@@ -16,7 +16,7 @@ const madul = {
     const allMessages  = await this.db.getAllMessagesBefore({ timestamp })
     const fromMyFriend = await this.db.getMessagesFrom({ friend })
 
-    done(await sdk.iterable(messages).filter(async message =>
+    done(sdk.iterable(messages).filter(message =>
       fromMyFriend.includes(message)
     ))
   }
