@@ -5,9 +5,10 @@
   "exports": {
     ".": "./lib/index.js",
     "./initialize": "./lib/Initializer/index.js",
-    "./dependencySpec": "./lib/DependencySpec/index.js",
+    "./dep": "./lib/DependencySpec/index.js",
     "./events": "./sdk/Events.js",
-    "./iterable": "./sdk/Iterable.js"
+    "./iterable": "./sdk/Iterable.js",
+    "./decorators": "./lib/DecoratorManager.js"
   },
   "files": [
     "lib"
