@@ -5,14 +5,33 @@ const {
   get,
   init,
   reset,
+  remove,
   getAll,
   addAll,
   resetAll,
 } = require('../lib/DecoratorManager')
 
-describe.only('DecoratorManager', () => {
+describe('DecoratorManager', () => {
   beforeEach(() => init('/example'))
   afterEach(resetAll)
+
+  describe('init', () => {
+    it('is a function', () =>
+      expect(init).to.be.a('function')
+    )
+
+    it('creates an empty array of decorators for the specified madul', () => {
+      try { get('/decorator') }
+      catch (e) { expect(e.message).to.equal('/decorator has not yet had its decorator collection initialized') }
+
+      init('/decorator')
+
+      const decoratrors = get('/decorator')
+
+      expect(Array.isArray(decoratrors)).to.be.true
+      expect(decoratrors.length).to.equal(0)
+    })
+  })
 
   describe('get', () => {
     it('is a function', () =>
@@ -28,6 +47,33 @@ describe.only('DecoratorManager', () => {
       expect(decorators[0].spec).to.equal('/decorator')
       expect(decorators[0].instance.before).to.be.a('function')
       expect(decorators[0].instance.after).to.be.undefined
+    })
+
+    it('throws an error when the decorator collection for the specified madul does not exist', () => {
+      try { get('/nonexistant') }
+      catch (e) { expect(e.message).to.equal('/nonexistant has not yet had its decorator collection initialized') }
+    })
+  })
+
+  describe('getAll', () => {
+    it('is a function', () =>
+      expect(getAll).to.be.a('function')
+    )
+
+    it('returns all decoratrors as an object', async () => {
+      await add('/example', '/decorator')
+
+      const allDecorators = getAll()
+
+      // This is 2 because add() calls initialize(), which calls loadFromAllBundles().
+      // Since decorators are maduls, when a decorator is initialized, it is added
+      // to the decorators object. Decorators can have decorators. 🤯
+      expect(Object.keys(allDecorators).length).to.equal(2)
+      expect(Array.isArray(allDecorators['/example'])).to.be.true
+      expect(Array.isArray(allDecorators['/decorator'])).to.be.true
+      expect(allDecorators['/example'].length).to.equal(1)
+      // We haven't called add('/decorator', anotherDecorator), so this array is empty
+      expect(allDecorators['/decorator'].length).to.equal(0)
     })
   })
 
@@ -58,28 +104,6 @@ describe.only('DecoratorManager', () => {
       catch (e) {
         expect(e.message).to.equal('/decorator is already a decorator for /example')
       }
-    })
-  })
-
-  describe('getAll', () => {
-    it('is a function', () =>
-      expect(getAll).to.be.a('function')
-    )
-
-    it('returns all decoratrors as an object', async () => {
-      await add('/example', '/decorator')
-
-      const allDecorators = getAll()
-
-      // This is 2 because add() calls initialize(), which calls loadFromAllBundles().
-      // Since decorators are maduls, when a decorator is initialized, it is added
-      // to the decorators object. Decorators can have decorators. 🤯
-      expect(Object.keys(allDecorators).length).to.equal(2)
-      expect(Array.isArray(allDecorators['/example'])).to.be.true
-      expect(Array.isArray(allDecorators['/decorator'])).to.be.true
-      expect(allDecorators['/example'].length).to.equal(1)
-      // We haven't called add('/decorator', anotherDecorator), so this array is empty
-      expect(allDecorators['/decorator'].length).to.equal(0)
     })
   })
 
@@ -118,6 +142,52 @@ describe.only('DecoratorManager', () => {
 
       expect(Array.isArray(decorators)).to.be.true
       expect(decorators.length).to.equal(0)
+    })
+  })
+
+  describe('resetAll', () => {
+    it('is a function', () =>
+      expect(resetAll).to.be.a('function')
+    )
+
+    it('resets the decorators for all maduls to empty arrays', async () => {
+      await add('/example',   '/decorator')
+      await add('/decorator', '/anotherDecorator')
+
+      const exampleDecorators   = get('/example')
+      const decoratorDecorators = get('/decorator')
+
+      expect(exampleDecorators.length).to.equal(1)
+      expect(decoratorDecorators.length).to.equal(1)
+
+      resetAll()
+
+      expect(exampleDecorators.length).to.equal(0)
+      expect(decoratorDecorators.length).to.equal(0)
+    })
+  })
+
+  describe('remove', () => {
+    it('is a function', () =>
+      expect(remove).to.be.a('function')
+    )
+
+    it("removes the specified decorator from the specified madul's collection", async () => {
+      await add('/example', '/decorator')
+      await add('/example', '/anotherDecorator')
+
+      const decorators = get('/example')
+
+      expect(decorators.length).to.equal(2)
+
+      remove('/example', '/decorator')
+
+      expect(decorators.length).to.equal(1)
+    })
+
+    it('throws an error when the collection for the specified madul does not exist', () => {
+      try { remove('/decorator', '/anotherDecorator') }
+      catch (e) { expect(e.message).to.equal('/decorator has not yet had its decorator collection initialized') }
     })
   })
 })
