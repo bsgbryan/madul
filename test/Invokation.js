@@ -1,10 +1,39 @@
 const { expect } = require('chai')
 
-const { record } = require('../sdk/Invokation')
+const {
+  record,
+  bootstrap,
+} = require('../sdk/Invokation')
 
 const { on } = require('../sdk/Events')
 
 describe('Invokation', () => {
+  describe('bootstrap', () => {
+    it('is a function', () =>
+      expect(bootstrap).to.be.a('function')
+    )
+
+    it('is an async function', () =>
+      expect(bootstrap.constructor.name).to.equal('AsyncFunction')
+    )
+  })
+
+  describe('record', () => {
+    it('is a function', () =>
+      expect(record).to.be.a('function')
+    )
+
+    it('returns an object whose properties are the lifecycle notifications', () => {
+      const result = record()
+
+      expect(result).to.be.an('object')
+      expect(result.invoke).to.be.a('function')
+      expect(result.complete).to.be.a('function')
+      expect(result.fail).to.be.a('function')
+      expect(result.update).to.be.a('function')
+    })
+  })
+
   describe('invoke', () => {
     it('is a function', () =>
       expect(record().invoke).to.be.a('function')
