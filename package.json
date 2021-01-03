@@ -14,7 +14,8 @@
     "lib"
   ],
   "scripts": {
-    "test": "mocha --watch"
+    "test": "mocha --watch",
+    "coverage": "nyc mocha"
   },
   "keywords": [
     "async",
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "mocha": "^8.2.1"
+    "mocha": "^8.2.1",
+    "nyc": "^15.1.0"
   }
 }
