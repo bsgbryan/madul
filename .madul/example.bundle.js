@@ -1,12 +1,12 @@
 module.exports = {
   // Path to load maduls/decoratos from (optional: when not present, the entire project is searched)
-  path: 'main',
+  // path: 'main',
   // Array of paths to ignore when loading (maybe this is only used when path is not present?)
-  ignore: [ ],
+  // ignore: [ ],
   // This object adds to the core SDK
-  sdk: { },
+  // sdk: { },
   // Array of string (depednency specs)
-  decorators: [ ],
+  decorators: ['/decorator'],
   // Array of string (depednency specs)
-  maduls: [ ]
+  maduls: ['/example']
 }
