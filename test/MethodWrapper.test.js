@@ -1,5 +1,7 @@
 const { expect } = require('chai')
 
+const { init } = require('../lib/DecoratorManager')
+
 const {
   wrap,
   doWrap,
@@ -7,6 +9,13 @@ const {
 } = require('../lib/MethodWrapper')
 
 const foo = { bar: function() { } }
+
+/*
+  IMPORTANT: We *must* initialize the decorators collection
+             for /test before the tests, otherwise we'll get
+             a bunch of errors.
+ */
+init('/test')
 
 describe('MethodWrapper', () => {
   describe('wrap', () => {
@@ -117,7 +126,7 @@ describe('MethodWrapper', () => {
     it('rejects the Promise when the wrapped function throws an error', async () => {
       const output   = { }
       const instance = { bar: () => { throw new Error('BOOM') } }
-      const wrapped  = doWrap('test', instance, 'bar', output)
+      const wrapped  = doWrap('/test', instance, 'bar', output)
 
       try {
         await wrapped()

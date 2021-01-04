@@ -1,7 +1,7 @@
 const { expect } = require('chai')
 
 const {
-  doHydrate
+  doHydrate, hydrate
 } = require('../lib/DependencyHydrator')
 
 describe('DependencyHydrator', () => {
@@ -34,5 +34,11 @@ describe('DependencyHydrator', () => {
         expect(output.chai).to.be.undefined
       })
     })
+  })
+
+  describe('hydrate', () => {
+    it('is a function', () =>
+      expect(hydrate).to.be.a('function')
+    )
   })
 })
