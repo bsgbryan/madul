@@ -1,14 +1,15 @@
 const { expect } = require('chai')
 
-const { init } = require('../lib/DecoratorManager')
+const {
+  init,
+  resetAll,
+} = require('../lib/DecoratorManager')
 
 const {
   wrap,
   doWrap,
   validate
 } = require('../lib/MethodWrapper')
-
-const foo = { bar: function() { } }
 
 /*
   IMPORTANT: We *must* initialize the decorators collection
@@ -18,13 +19,15 @@ const foo = { bar: function() { } }
 init('/test')
 
 describe('MethodWrapper', () => {
+  afterEach(resetAll)
+
   describe('wrap', () => {
     it('is a function', () =>
       expect(wrap).to.be.a('function')
     )
 
     it('returns a Promise', () => {
-      const fn = Object.getPrototypeOf(wrap('test', foo)).constructor
+      const fn = Object.getPrototypeOf(wrap('test', { })).constructor
 
       expect(fn.name).to.equal('Promise')
     })
@@ -54,8 +57,8 @@ describe('MethodWrapper', () => {
 
     it('does not wrap properties that are not functions', async () => {
       const test = {
-        ...foo,
         $init: false,
+        foo: ({ done }) => done(),
         baz:   4,
       }
 
