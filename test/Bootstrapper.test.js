@@ -1,12 +1,12 @@
 const { expect } = require('chai')
 
-const initialize = require('../lib/Initializer')
-const execute$   = require('../lib/Initializer/execute$')
+const bootstrap           = require('../lib/Bootstrapper')
+const executeInitializers = require('../lib/Bootstrapper/executeInitializers')
 
 describe('Madul', () => {
-  describe('execute$', () => {
+  describe('executeInitializers', () => {
     it('is a function', () =>
-      expect(execute$).to.be.a('function')
+      expect(executeInitializers).to.be.a('function')
     )
 
     it('executes all methods starting with a $ found on a wrapped object', async () => {
@@ -14,21 +14,21 @@ describe('Madul', () => {
 
       const ready = {
         /* NOTE: These methods *must* have been wrapped via MethodWrapper.wrap
-                 for execute$ to work correctly. */
+                 for executeInitializers to work correctly. */
         $init: async () => Promise.resolve(calls++),
         $foo:  async () => Promise.resolve(calls++),
 
       }
 
-      await execute$(ready)
+      await executeInitializers(ready)
       
       expect(calls).to.equal(2)
     })
   })
 
-  describe('initialize', () => {
+  describe('bootstrap', () => {
     it('is a function', () =>
-      expect(initialize).to.be.a('function')
+      expect(bootstrap).to.be.a('function')
     )
   })
 })

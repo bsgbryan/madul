@@ -1,6 +1,6 @@
 const { expect } = require('chai')
 
-const initialize = require('../lib/Initializer')
+const bootstrap = require('../lib/Bootstrapper')
 
 const {
   execute,
@@ -16,9 +16,9 @@ describe('DecoratorManager', () => {
     )
 
     it('execute all decorators for a madul when any member is invoked', async () => {
-      const test   = await initialize('/test')
-      const before = await initialize('/testBefore')
-      const after  = await initialize('/testAfter')
+      const test   = await bootstrap('/test')
+      const before = await bootstrap('/testBefore')
+      const after  = await bootstrap('/testAfter')
 
       await test.foo()
 
