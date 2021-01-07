@@ -1,5 +1,5 @@
 {
-  "name": "madul",
+  "name": "@bsgbryan/madul",
   "version": "2.0.0",
   "description": "A simple tool that makes writing async code fun & easy",
   "exports": {
