@@ -1,6 +1,6 @@
 {
   "name": "@bsgbryan/madul",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "A simple tool that makes writing async code fun & easy",
   "exports": {
     ".": "./lib/index.js",
@@ -22,14 +22,10 @@
     "module",
     "class"
   ],
-  "author": {
-    "name": "Bryan Maynard",
-    "email": "bsgbryan@gmail.com",
-    "url": "https://bsgbryan.com"
-  },
+  "author": "Bryan Maynard <bsgbryan@gmail.com> (https://bsgbryan.com)",
   "repository": {
     "type": "git",
-    "url": "git@github.com:bsgbryan/madul.git"
+    "url": "git+ssh://git@github.com/bsgbryan/madul.git"
   },
   "bugs": {
     "url": "https://github.com/bsgbryan/madul/issues"
@@ -45,5 +41,10 @@
     "chai": "^4.2.0",
     "mocha": "^8.2.1",
     "nyc": "^15.1.0"
+  },
+  "homepage": "https://github.com/bsgbryan/madul#readme",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
   }
 }
