@@ -1,6 +1,6 @@
 let called = false
 
-exports = {
+const madul = {
   before: ({ done }) => {
     called = true
     

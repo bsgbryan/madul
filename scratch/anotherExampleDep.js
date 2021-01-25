@@ -1,4 +1,4 @@
-exports = {
+const madul = {
   biff: ({ done }) => done(),
   buzz: ({ done }) => done(),
   boom: ({ done }) => done(),

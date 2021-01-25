@@ -1,3 +1,3 @@
-exports = {
-  foo: ({ done }) => done(sdk)
+const madul = {
+  foo: ({ done }) => done()
 }

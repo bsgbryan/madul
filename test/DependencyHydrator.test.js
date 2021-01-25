@@ -1,8 +1,7 @@
 const { expect } = require('chai')
 
-const { SCOPE   } = require('../lib/DependencySpec')
-const   load      = require('../lib/Loader')
-const   hydrate   = require('../lib/DependencyHydrator')
+const load    = require('../lib/Loader')
+const hydrate = require('../lib/DependencyHydrator')
 
 describe('DependencyHydrator', () => {
   describe('hydrate', () => {
@@ -48,7 +47,7 @@ describe('DependencyHydrator', () => {
     })
 
     it('returns the madul with all deps ready to go', async () => {
-      const loaded   = await load('/hasDeps', SCOPE.LOCAL)
+      const loaded   = await load('/hasDeps', { root: process.cwd() })
       const hydrated = await hydrate(loaded.deps)
 
       expect(hydrated.exampleDep).to.be.an('object')

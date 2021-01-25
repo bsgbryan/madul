@@ -42,7 +42,7 @@ describe('BundleProcessor', () => {
       expect(processAllBundles).to.be.a('function')
     )
 
-    it('adds the decorators from all bundle to the specified spec', async () => {
+    it('adds the decorators from all bundles to the specified spec', async () => {
       const decorators = get('/example')
 
       expect(decorators.length).to.equal(0)

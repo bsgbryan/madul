@@ -14,9 +14,10 @@ describe('SourceLocator', () => {
     )
 
     it('returns the path to the main source for a node module', async () => {
-      const path = `${process.cwd()}/node_modules/chai/./index`
+      const cwd  = process.cwd()
+      const path = `${cwd}/node_modules/chai/./index`
 
-      expect(await fromNodeModules('chai')).to.equal(path)
+      expect(await fromNodeModules('chai', cwd)).to.equal(path)
     })
   })
 
@@ -58,7 +59,7 @@ describe('SourceLocator', () => {
     )
 
     it('returns the path the the file passed as ref', async () => {
-      const path = await fromCWD('example')
+      const path = await fromCWD('example', process.cwd())
 
       expect(path).to.equal(`${process.cwd()}/scratch/example.js`)
     })
