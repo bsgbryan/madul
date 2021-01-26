@@ -2,11 +2,9 @@
 
 Madul is a simple set of tools that help you craft clean async code that scales ridiculously well, is fun to write & maintain, and is super simple to instrument
 
----
-
 ### Super-quick overview
 
-##### madul definition (`getMessages.js`)
+##### definition (`getMessages.js`)
 ```js
 const madul = {
   deps: ['/db'],
@@ -33,7 +31,7 @@ const madul = {
 1. The `$init` method is guaranteed to be executed after `madul` has fully loaded, but before it's available for use; so you know that the `db` dependency will be properly setup and connected to as `username`
 1. `sdk` is a collection of helpful functions. The [iterable sdk](https://github.com/bsgbryan/madul/blob/master/sdk/Iterable.js) wraps the [async](https://www.npmjs.com/package/async) library. `sdk` is easily configurable/customizable per madul.
 
-##### madul usage (`getMessagesFromAda.js`)
+##### usage (`getMessagesFromAda.js`)
 ```js
 const bootstrap = require('@bsgbryan/madul/bootstrap')
 
@@ -58,6 +56,4 @@ main()
 1. We don't pass the `db` dependency to `getMessagesFrom`; that's handled for us
 1. `main` is necessary here because Node.js doesn't [support](https://dev.to/mikeesto/top-level-await-in-node-2jad) top level `await` in _non_-ES modules
 
----
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![NPM](https://img.shields.io/npm/l/@bsgbryan/madul) ![nycrc config on GitHub](https://img.shields.io/nycrc/bsgbryan/madul) ![Travis (.com) branch](https://img.shields.io/travis/com/bsgbryan/madul/master) ![GitHub top language](https://img.shields.io/github/languages/top/bsgbryan/madul) ![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/bsgbryan/madul) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/bsgbryan/madul/master)
