@@ -1,3 +1,5 @@
+![NPM](https://img.shields.io/npm/l/@bsgbryan/madul) ![nycrc config on GitHub](https://img.shields.io/nycrc/bsgbryan/madul) ![Travis (.com) branch](https://img.shields.io/travis/com/bsgbryan/madul/master) ![GitHub top language](https://img.shields.io/github/languages/top/bsgbryan/madul) ![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/bsgbryan/madul) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/bsgbryan/madul/master)
+
 # Mädūl
 
 Madul is a simple set of tools that help you craft clean async code that scales ridiculously well, is fun to write & maintain, and is super simple to instrument
@@ -55,5 +57,3 @@ main()
 1. We don't call `$init` directly; that's handled for us as part of `bootstrap`
 1. We don't pass the `db` dependency to `getMessagesFrom`; that's handled for us
 1. `main` is necessary here because Node.js doesn't [support](https://dev.to/mikeesto/top-level-await-in-node-2jad) top level `await` in _non_-ES modules
-
-![NPM](https://img.shields.io/npm/l/@bsgbryan/madul) ![nycrc config on GitHub](https://img.shields.io/nycrc/bsgbryan/madul) ![Travis (.com) branch](https://img.shields.io/travis/com/bsgbryan/madul/master) ![GitHub top language](https://img.shields.io/github/languages/top/bsgbryan/madul) ![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/bsgbryan/madul) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/bsgbryan/madul/master)
