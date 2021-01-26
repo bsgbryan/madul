@@ -64,8 +64,8 @@ describe('MethodWrapper', () => {
 
       const wrapped = await wrap('/test', test)
 
-      expect(wrapped.baz).to.equal(4)
-      expect(wrapped.$init).to.be.false
+      expect(wrapped.baz).to.be.undefined
+      expect(wrapped.$init).to.be.undefined
     })
 
     it('returns a frozen object', async () => {
@@ -87,7 +87,7 @@ describe('MethodWrapper', () => {
 
       const wrapped = await wrap('/test', test)
 
-      expect(wrapped.bar()).to.equal('Not wrapped')
+      expect(wrapped.bar).to.be.undefined
     })
   })
 
@@ -108,28 +108,28 @@ describe('MethodWrapper', () => {
       expect(fn.name).to.equal('Promise')
     })
 
-    it('invokes the specified property, using the passed output as "this"', async () => {
-      const output   = { foo: 4 }
-      const instance = { bar: function({ done }) { done(this.foo) } }
-      const wrapped  = doWrap('/test', instance, 'bar', output)
+    it('invokes the specified property, using the passed self as the self param', async () => {
+      const self     = { foo: 4 }
+      const instance = { bar: function({ self, done }) { done(self.foo) } }
+      const wrapped  = doWrap('/test', instance, 'bar', self)
       const result   = await wrapped()
 
-      expect(result).to.equal(output.foo)
+      expect(result).to.equal(self.foo)
     })
 
     it('passes params through to the wrapped function', async () => {
-      const output   = { }
+      const self     = { }
       const instance = { bar: ({ example, done }) => done(example) }
-      const wrapped  = doWrap('/test', instance, 'bar', output)
+      const wrapped  = doWrap('/test', instance, 'bar', self)
       const result   = await wrapped({ example: 'param' })
 
       expect(result).to.equal('param')
     })
 
     it('rejects the Promise when the wrapped function throws an error', async () => {
-      const output   = { }
+      const self     = { }
       const instance = { bar: () => { throw new Error('BOOM') } }
-      const wrapped  = doWrap('/test', instance, 'bar', output)
+      const wrapped  = doWrap('/test', instance, 'bar', self)
 
       try {
         await wrapped()
@@ -139,9 +139,9 @@ describe('MethodWrapper', () => {
     })
 
     it('resolves the Promise when done is called', async () => {
-      const output   = { }
+      const self     = { }
       const instance = { bar: ({ done }) => done('whew!') }
-      const wrapped  = doWrap('/test', instance, 'bar', output)
+      const wrapped  = doWrap('/test', instance, 'bar', self)
       const result   = await wrapped()
 
       expect(result).to.equal('whew!')

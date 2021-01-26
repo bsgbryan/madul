@@ -1,3 +1,4 @@
 const madul = {
-  baz: ({ done }) => done(sdk)
+  deps: ['/test'],
+  baz: ({ self, test, done }) => done(sdk)
 }
