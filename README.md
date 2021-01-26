@@ -21,8 +21,6 @@ const madul = {
     ))
   }
 }
-
-exports = madul
 ```
 
 ##### In the above code:
