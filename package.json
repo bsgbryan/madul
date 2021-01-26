@@ -14,7 +14,8 @@
     "lib"
   ],
   "scripts": {
-    "test": "mocha --watch",
+    "test": "mocha",
+    "watch" : "mocha --watch",
     "coverage": "nyc mocha"
   },
   "keywords": [
