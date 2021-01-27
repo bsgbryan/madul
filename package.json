@@ -8,7 +8,8 @@
     "./dep": "./lib/DependencySpec/index.js",
     "./events": "./sdk/Events.js",
     "./iterable": "./sdk/Iterable.js",
-    "./decorators": "./lib/DecoratorManager.js"
+    "./decorators": "./lib/DecoratorManager.js",
+    "./testable": "./lib/Testable.js"
   },
   "files": [
     "lib",
