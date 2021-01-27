@@ -6,7 +6,6 @@
     "sdk/*",
     ".madul/*",
     "test/*",
-    "lib/Testable.js",
     "lib/index.js"
   ],
   "lines": 90,
