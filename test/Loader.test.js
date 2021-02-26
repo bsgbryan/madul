@@ -87,7 +87,6 @@ describe('Loader', () => {
     const loadPath = tmpdir()
     const wrapped = 'const test = () => "OHAI"'
 
-    console.log(tmpdir())
     await tmpFile.createTmpFileOnlyIfItDoesntExist(loadFile, loadPath, wrapped)
 
     const s = await stat(loadFile)
