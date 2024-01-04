@@ -1,5 +1,3 @@
-![NPM](https://img.shields.io/npm/l/@bsgbryan/madul) ![GitHub top language](https://img.shields.io/github/languages/top/bsgbryan/madul) ![nycrc config on GitHub](https://img.shields.io/nycrc/bsgbryan/madul?color=g&preferredThreshold=functions) ![Travis (.com) branch](https://img.shields.io/travis/com/bsgbryan/madul/master) ![Snyk Vulnerabilities for GitHub Repo](https://img.shields.io/snyk/vulnerabilities/github/bsgbryan/madul) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/bsgbryan/madul/master)
-
 # Mädūl
 
 Madul is a simple set of tools that help you craft clean async code that scales ridiculously well, is fun to write & maintain, and is super simple to instrument
