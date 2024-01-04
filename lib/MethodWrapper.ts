@@ -1,23 +1,36 @@
-const each = require('async/each')
+import {
+  Madul,
+  ParameterSet,
+} from "./types"
 
-const {
+import { each } from "async"
+
+import {
   record,
   bootstrap,
-} = require('../sdk/Invokation')
+  // @ts-ignore
+} from "../sdk/Invokation"
 
-const { parse   } = require('./DependencySpec')
-const { execute } = require('./DecoratorManager')
+  // @ts-ignore
+import { parse   } from "./DependencySpec"
+// @ts-ignore
+import { execute } from "./DecoratorManager"
 
-const doWrap = (spec, instance, method, self) =>
-  async params =>
+export const doWrap = (
+  spec: string,
+  instance?: Madul,
+  method?: string,
+  self?: Madul,
+) =>
+  async (params?: ParameterSet) =>
     new Promise(async (resolve, reject) => {
-      const args       = { ...params, ...instance.hydrated }
+      const args       = { ...params, ...instance?.hydrated }
       const invokation = record()
-      const progress   = params => invokation.update(spec, method, params)
+      const progress   = (params: ParameterSet) => invokation.update(spec, method, params)
 
       let doneCalled = false
 
-      const done = async result => {
+      const done = async (result: unknown) => {
         doneCalled = true
 
         try {
@@ -35,6 +48,7 @@ const doWrap = (spec, instance, method, self) =>
         await execute({ mode: 'before', args, spec, method })
         invokation.invoke(spec, method, args)
 
+        // @ts-ignore
         const result = await instance[method].call(null, { ...args, self, done, progress })
 
         process.nextTick(async () => {
@@ -48,10 +62,11 @@ const doWrap = (spec, instance, method, self) =>
       }
     })
 
-const validate = instance => {
+export const validate = (instance: Madul) => {
   if (Array.isArray(instance))
     throw new Error('An array cannot be wrapped')
 
+  // @ts-ignore
   if (instance === false)
     throw new Error(`boolean is not a valid type`)
 
@@ -70,7 +85,11 @@ const validate = instance => {
     throw new Error('instance must contain at least one functional property')
 }
 
-const wrap = async (spec, instance, params) =>
+export const wrap = async (
+  spec: string,
+  instance: Madul,
+  params?: ParameterSet,
+) =>
   new Promise(async (resolve, reject) => {
     try {
       validate(instance)
@@ -79,28 +98,31 @@ const wrap = async (spec, instance, params) =>
     }
     catch (e) { return reject(e) }
     
-    const deps   = instance.deps?.map(spec => parse(spec).ref)
-    const output = { }
+    const deps   = instance.deps?.map((d: string) => parse(d).ref)
+    const output = { } as Madul
 
     const initializers = Object.keys(instance).filter(i => {
-      const isntDep = !deps?.includes(i)
-      const isFn    = typeof instance[i] === 'function'
+      const isDep  = deps?.includes(i)
+      const isFn   = typeof instance[i] === 'function'
+      const isInit = i[0] === '$'
       
-      return isntDep && isFn && i[0] === '$'
+      return !isDep && isFn && isInit
     })
 
     await each(initializers, async i => {
-      const extra = await doWrap(spec, instance, i, output)(params)
+      const extra = await doWrap(spec, instance, i, output)(params) as Madul
 
       for (const e of Object.keys(extra || { }))
+      // @ts-ignore
         instance.hydrated[e] = extra[e]
     })
 
     const needsWrapping = Object.keys(instance).filter(n => {
-      const isntDep = !deps?.includes(n)
-      const isFn    = typeof instance[n] === 'function'
+      const isDep  = deps?.includes(n)
+      const isFn   = typeof instance[n] === 'function'
+      const isInit = n[0] === '$'
       
-      return isntDep && isFn && n[0] !== '$' && n[0] !== '_'
+      return !isDep && isFn && !isInit && !n.includes('_')
     })
 
     for (const n of needsWrapping)
@@ -114,7 +136,7 @@ const wrap = async (spec, instance, params) =>
     })
 
     for (const b of bare)
-      output[b] = args => instance[b]({
+      output[b] = (args: ParameterSet) => instance[b]({
         self: output,
         ...args,
         ...instance.hydrated,
@@ -122,7 +144,3 @@ const wrap = async (spec, instance, params) =>
 
     resolve(Object.freeze(output))
   })
-
-exports.wrap     = wrap
-exports.doWrap   = doWrap
-exports.validate = validate

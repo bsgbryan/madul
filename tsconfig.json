@@ -1,0 +1,12 @@
+{
+  "extends": [
+    "@tsconfig/bun/tsconfig.json",
+    "@tsconfig/node-lts/tsconfig.json"
+  ],
+  "include": [
+    "./lib/**/*"
+  ],
+  "compilerOptions": {
+    "types": ["bun-types"]
+  }
+}

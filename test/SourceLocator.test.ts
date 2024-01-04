@@ -4,12 +4,12 @@ import {
   it,
 } from "bun:test"
 
-const {
+import {
   find,
   recurse,
   fromCWD,
   fromNodeModules,
-} = require('../lib/SourceLocator')
+} from "../lib/SourceLocator"
 
 describe('SourceLocator', () => {
   describe('fromNodeModules', () => {
