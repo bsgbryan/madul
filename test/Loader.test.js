@@ -1,5 +1,3 @@
-const { expect } = require('chai')
-
 const { tmpdir } = require('os')
 
 const { stat } = require('fs').promises

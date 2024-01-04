@@ -2,7 +2,7 @@ const cluster = require('cluster')
 
 const { system } = require('systeminformation')
 
-const { now } = require('microtime')
+const { now } = performance
 
 const {
   call,

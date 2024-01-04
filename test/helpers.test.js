@@ -1,5 +1,3 @@
-const { expect } = require('chai')
-
 const { executeAndReset } = require('../lib/helpers')
 
 describe('helpers', () => {

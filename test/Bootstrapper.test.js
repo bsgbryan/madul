@@ -1,5 +1,3 @@
-const { expect } = require('chai')
-
 const bootstrap           = require('../lib/Bootstrapper')
 const executeInitializers = require('../lib/Bootstrapper/executeInitializers')
 
