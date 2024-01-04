@@ -5,16 +5,17 @@ import {
   afterEach,
 } from "bun:test"
 
-const {
+import {
   init,
   resetAll,
-} = require('../lib/DecoratorManager')
+} from "../lib/DecoratorManager"
 
-const {
+import {
   wrap,
   doWrap,
   validate
-} = require('../lib/MethodWrapper')
+} from "../lib/MethodWrapper"
+import { Madul } from "../lib/types"
 
 /*
   IMPORTANT: We *must* initialize the decorators collection
@@ -32,7 +33,8 @@ describe('MethodWrapper', () => {
     )
 
     it('returns a Promise', () => {
-      const fn = Object.getPrototypeOf(wrap('test', { foo: () => {} })).constructor
+      const foo = { foo: () => {} } as unknown as Madul
+      const fn = Object.getPrototypeOf(wrap('test', foo)).constructor
 
       expect(fn.name).toEqual('Promise')
     })
@@ -46,9 +48,9 @@ describe('MethodWrapper', () => {
 
           done()
         }
-      }
+      } as unknown as Madul
 
-      const wrapped = await wrap('/test', test)
+      const wrapped = await wrap('/test', test) as Madul
 
       expect(Object.keys(test).length).toEqual(1)
       expect(Object.keys(wrapped).length).toEqual(1)
@@ -62,9 +64,9 @@ describe('MethodWrapper', () => {
         $init: false,
         foo: ({ done }) => done(),
         baz:   4,
-      }
+      } as unknown as Madul
 
-      const wrapped = await wrap('/test', test)
+      const wrapped = await wrap('/test', test) as Madul
 
       expect(wrapped.baz).toBeUndefined()
       expect(wrapped.$init).toBeUndefined()
@@ -73,7 +75,7 @@ describe('MethodWrapper', () => {
     it('returns a frozen object', async () => {
       const test = {
         foo: function() { }
-      }
+      } as unknown as Madul
 
       const wrapped = await wrap('/test', test)
 
@@ -84,9 +86,9 @@ describe('MethodWrapper', () => {
       const test = {
         deps: ['BAR -> bar'],
         bar:  function() { return 'Not wrapped' },
-      }
+      } as unknown as Madul
 
-      const wrapped = await wrap('/test', test)
+      const wrapped = await wrap('/test', test) as Madul
 
       expect(wrapped.bar).toBeUndefined()
     })
@@ -104,15 +106,16 @@ describe('MethodWrapper', () => {
     })
 
     it('returns a Promise from the returned AsyncFunction', () => {
-      const delegate = doWrap('/test', { foo: () => {} }, 'foo')
+      const foo = { foo: () => {} } as unknown as Madul
+      const delegate = doWrap('/test', foo, 'foo')
       const fn = Object.getPrototypeOf(delegate()).constructor
 
       expect(fn.name).toEqual('Promise')
     })
 
     it('invokes the specified property, using the passed self as the self param', async () => {
-      const self     = { foo: 4 }
-      const instance = { bar: function({ self, done }) { done(self.foo) } }
+      const self     = { foo: 4 } as unknown as Madul
+      const instance = { bar: function({ self, done }) { done(self.foo) } } as unknown as Madul
       const wrapped  = doWrap('/test', instance, 'bar', self)
       const result   = await wrapped()
 
@@ -120,8 +123,8 @@ describe('MethodWrapper', () => {
     })
 
     it('passes params through to the wrapped function', async () => {
-      const self     = { }
-      const instance = { bar: ({ example, done }) => done(example) }
+      const self     = { } as unknown as Madul
+      const instance = { bar: ({ example, done }) => done(example) } as unknown as Madul
       const wrapped  = doWrap('/test', instance, 'bar', self)
       const result   = await wrapped({ example: 'param' })
 
@@ -129,8 +132,8 @@ describe('MethodWrapper', () => {
     })
 
     it('rejects the Promise when the wrapped function throws an error', async () => {
-      const self     = { }
-      const instance = { bar: () => { throw new Error('BOOM') } }
+      const self     = { } as unknown as Madul
+      const instance = { bar: () => { throw new Error('BOOM') } } as unknown as Madul
       const wrapped  = doWrap('/test', instance, 'bar', self)
 
       try {
@@ -141,8 +144,8 @@ describe('MethodWrapper', () => {
     })
 
     it('resolves the Promise when done is called', async () => {
-      const self     = { }
-      const instance = { bar: ({ done }) => done('whew!') }
+      const self     = { } as unknown as Madul
+      const instance = { bar: ({ done }) => done('whew!') } as unknown as Madul
       const wrapped  = doWrap('/test', instance, 'bar', self)
       const result   = await wrapped()
 
@@ -157,6 +160,7 @@ describe('MethodWrapper', () => {
 
     it('throws an error if passed an array', () => {
       try {
+        // @ts-ignore
         validate([])
       } catch (e) {
         expect(e.message).toEqual('An array cannot be wrapped')
@@ -165,6 +169,7 @@ describe('MethodWrapper', () => {
 
     it('throws an error if passed a string', () => {
       try {
+        // @ts-ignore
         validate('foo')
       } catch (e) {
         expect(e.message).toEqual('string is not a valid type')
@@ -173,6 +178,7 @@ describe('MethodWrapper', () => {
 
     it('throws an error if passed a number', () => {
       try {
+        // @ts-ignore
         validate(4)
       } catch (e) {
         expect(e.message).toEqual('number is not a valid type')
@@ -181,6 +187,7 @@ describe('MethodWrapper', () => {
 
     it('throws an error if passed a boolean', () => {
       try {
+        // @ts-ignore
         validate(false)
       } catch (e) {
         expect(e.message).toEqual('boolean is not a valid type')
@@ -189,6 +196,7 @@ describe('MethodWrapper', () => {
 
     it('throws an error if passed null', () => {
       try {
+        // @ts-ignore
         validate(null)
       } catch (e) {
         expect(e.message).toEqual('Cannot wrap null')
@@ -197,6 +205,7 @@ describe('MethodWrapper', () => {
 
     it('throws an error if passed undefined', () => {
       try {
+        // @ts-ignore
         validate()
       } catch (e) {
         expect(e.message).toEqual('Cannot wrap undefined')
@@ -205,6 +214,7 @@ describe('MethodWrapper', () => {
 
     it('throws an error if there are no functions to wrap', () => {
       try {
+        // @ts-ignore
         validate({})
       } catch (e) {
         expect(e.message).toEqual('instance must contain at least one functional property')

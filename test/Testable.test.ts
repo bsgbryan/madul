@@ -4,7 +4,7 @@ import {
   it,
 } from "bun:test"
 
-const testable = require('../lib/Testable')
+import testable from "../lib/Testable"
 
 describe('Testable', () => {
   it('is a function', () => expect(typeof testable).toBe('function'))

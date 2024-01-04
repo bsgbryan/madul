@@ -1,22 +1,22 @@
-const {
+import {
   stat,
   readdir,
   readFile,
-} = require('fs').promises
+} from "node:fs/promises"
 
-const {
+import {
   map,
   each,
   filter,
   reject,
-} = require('async')
+} from "async"
 
 const ignore = [
   'test',
   'node_modules',
 ]
 
-const fromNodeModules = async (ref, root) => {
+export const fromNodeModules = async (ref: string, root: string) => {
   const path = `${root}/node_modules/${ref}`
   const pkg  = `${path}/package.json`
   const s    = await stat(pkg)
@@ -30,7 +30,7 @@ const fromNodeModules = async (ref, root) => {
   }
 }
 
-const find = async (path, ref) => {
+export const find = async (path: string, ref: string) => {
   const nodes = await readdir(path)
   const files = await filter(nodes, async (file) => {
     const s = await stat(`${path}/${file}`)
@@ -43,7 +43,7 @@ const find = async (path, ref) => {
   return match.length === 1 ? `${path}/${match[0]}` : undefined
 }
 
-const recurse = async path => {
+export const recurse = async (path: string) => {
   const files = await readdir(path)
   const dirs  = await filter(files, async (file) => {
     const s = await stat(`${path}/${file}`)
@@ -58,12 +58,13 @@ const recurse = async path => {
   return mapped.sort()
 }
 
-const walk = async (root, ref, cb) => {
+// TODO Add tests for this
+export const walk = async (root: string, ref: string, cb: CallableFunction) => {
   const match = await find(root, ref)
 
   if (match === undefined) {
     const dirs     = await recurse(root)
-    const found    = await map(dirs, async d => await find(d, ref))
+    const found    = await map(dirs, async (d: string) => await find(d, ref))
     const filtered = found.filter(f => f !== undefined)
 
     if (filtered.length === 1)
@@ -71,7 +72,7 @@ const walk = async (root, ref, cb) => {
     else if (dirs.length > 0) {
       let m = 'not found'
 
-      const callback = result => m = result ? result : m
+      const callback = (result: string) => m = result ? result : m
 
       await each(dirs, async d => await walk(d, ref, callback))
 
@@ -81,18 +82,12 @@ const walk = async (root, ref, cb) => {
     cb(match)
 }
 
-const fromCWD = async (ref, root) =>
+export const fromCWD = async (ref: string, root: string) =>
   new Promise(async (resolve, reject) => {
     try {
-      await walk(root, ref, found =>
+      await walk(root, ref, (found: string) =>
         found ? resolve(found) : reject({ message: `${ref} not found` })
       )
     }
     catch (e) { reject(e) }
   })
-
-exports.find    = find
-exports.recurse = recurse
-
-exports.fromCWD         = fromCWD
-exports.fromNodeModules = fromNodeModules

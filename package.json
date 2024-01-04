@@ -38,5 +38,12 @@
   "directories": {
     "lib": "lib",
     "test": "test"
-    }
+  },
+  "devDependencies": {
+    "@tsconfig/bun": "^1.0.1",
+    "@tsconfig/node-lts": "^20.1.1",
+    "@types/async": "^3.2.24",
+    "bun-types": "^1.0.21",
+    "typescript": "5.3.3"
+  }
 }
