@@ -1,5 +1,3 @@
-const { expect } = require('chai')
-
 const testable = require('../lib/Testable')
 
 describe('Testable', () => {

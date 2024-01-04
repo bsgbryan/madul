@@ -1,5 +1,3 @@
-const { expect } = require('chai')
-
 const load    = require('../lib/Loader')
 const hydrate = require('../lib/DependencyHydrator')
 
