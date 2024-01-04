@@ -66,7 +66,7 @@ describe('Loader', () => {
     )
 
     it('returns the path to the created tmp file', async () => {
-      const path = `${tmpdir()}/madul/scratch/example.js`
+      const path = `${process.cwd()}/.maduls/scratch/example.js`
 
       expect(await tmpFile('example', process.cwd())).to.equal(path)
     })
