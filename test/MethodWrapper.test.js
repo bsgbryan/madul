@@ -27,19 +27,13 @@ describe('MethodWrapper', () => {
     )
 
     it('returns a Promise', () => {
-      const fn = Object.getPrototypeOf(wrap('test', { })).constructor
+      const fn = Object.getPrototypeOf(wrap('test', { foo: () => {} })).constructor
 
       expect(fn.name).to.equal('Promise')
     })
 
     it('wraps all methods on an object', async () => {
       const test = {
-        $init: function({ done, progress }) {
-          expect(done).to.be.a('function')
-          expect(progress).to.be.a('function')
-
-          done()
-        },
         foo: function({ testParam, done, progress }) {
           expect(testParam).to.equal('bar')
           expect(done).to.be.a('function')
@@ -51,7 +45,10 @@ describe('MethodWrapper', () => {
 
       const wrapped = await wrap('/test', test)
 
-      await wrapped.$init()
+      expect(Object.keys(test).length).to.equal(1)
+      expect(Object.keys(wrapped).length).to.equal(1)
+
+      // Prove wrapped function is async
       await wrapped.foo({ testParam: 'bar' })
     })
 
@@ -70,8 +67,7 @@ describe('MethodWrapper', () => {
 
     it('returns a frozen object', async () => {
       const test = {
-        $init: function() { },
-        foo:   function() { }
+        foo: function() { }
       }
 
       const wrapped = await wrap('/test', test)
@@ -103,7 +99,8 @@ describe('MethodWrapper', () => {
     })
 
     it('returns a Promise from the returned AsyncFunction', () => {
-      const fn = Object.getPrototypeOf(doWrap('/test')()).constructor
+      const delegate = doWrap('/test', { foo: () => {} }, 'foo')
+      const fn = Object.getPrototypeOf(delegate()).constructor
 
       expect(fn.name).to.equal('Promise')
     })
