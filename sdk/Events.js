@@ -1,6 +1,6 @@
-const { EventEmitter2 } = require('eventemitter2')
+const EventEmitter = require('eventemitter3')
 
-const emitter = new EventEmitter2({ wildcard: true })
+const emitter = new EventEmitter({ wildcard: true })
 
 const on   = (event, callback) => emitter.on(event, callback)
 const emit = (event, args    ) => emitter.emit(event, args)

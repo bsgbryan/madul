@@ -1,9 +1,15 @@
+import {
+  describe,
+  expect,
+  it,
+} from "bun:test"
+
 const { executeAndReset } = require('../lib/helpers')
 
 describe('helpers', () => {
   describe('executeAndReset', () => {
     it('is a function', () =>
-      expect(executeAndReset).to.be.a('function')
+      expect(typeof executeAndReset).toBe('function')
     )
 
     // it('executes all passed function and sets the array to undefined', () => {
@@ -13,8 +19,8 @@ describe('helpers', () => {
 
     //   executeAndReset(functions, 'test')
 
-    //   expect(calls).to.equal(2)
-    //   expect(functions.test).to.be.undefined
+    //   expect(calls).toEqual(2)
+    //   expect(functions.test).toBeUndefined()
     // })
   })
 })

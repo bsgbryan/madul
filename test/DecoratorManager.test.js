@@ -1,3 +1,10 @@
+import {
+  afterEach,
+  describe,
+  expect,
+  it,
+} from "bun:test"
+
 const bootstrap = require('../lib/Bootstrapper')
 
 const {
@@ -10,7 +17,7 @@ describe('DecoratorManager', () => {
 
   describe('execute', () => {
     it('is a function', () =>
-      expect(execute).to.be.a('function')
+      expect(typeof execute).toBe('function')
     )
 
     it('execute all decorators for a madul when any member is invoked', async () => {
@@ -23,8 +30,8 @@ describe('DecoratorManager', () => {
       const beforeRan = await before.didRun()
       const afterRan  = await after.didRun()
 
-      expect(beforeRan).to.be.true
-      expect(afterRan).to.be.true
+      expect(beforeRan).toBeTruthy()
+      expect(afterRan).toBeTruthy()
     })
   })
 })
