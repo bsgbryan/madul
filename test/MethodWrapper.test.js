@@ -1,3 +1,10 @@
+import {
+  describe,
+  expect,
+  it,
+  afterEach,
+} from "bun:test"
+
 const {
   init,
   resetAll,
@@ -21,21 +28,21 @@ describe('MethodWrapper', () => {
 
   describe('wrap', () => {
     it('is a function', () =>
-      expect(wrap).to.be.a('function')
+      expect(typeof wrap).toBe('function')
     )
 
     it('returns a Promise', () => {
       const fn = Object.getPrototypeOf(wrap('test', { foo: () => {} })).constructor
 
-      expect(fn.name).to.equal('Promise')
+      expect(fn.name).toEqual('Promise')
     })
 
     it('wraps all methods on an object', async () => {
       const test = {
         foo: function({ testParam, done, progress }) {
-          expect(testParam).to.equal('bar')
-          expect(done).to.be.a('function')
-          expect(progress).to.be.a('function')
+          expect(testParam).toEqual('bar')
+          expect(typeof done).toBe('function')
+          expect(typeof progress).toBe('function')
 
           done()
         }
@@ -43,8 +50,8 @@ describe('MethodWrapper', () => {
 
       const wrapped = await wrap('/test', test)
 
-      expect(Object.keys(test).length).to.equal(1)
-      expect(Object.keys(wrapped).length).to.equal(1)
+      expect(Object.keys(test).length).toEqual(1)
+      expect(Object.keys(wrapped).length).toEqual(1)
 
       // Prove wrapped function is async
       await wrapped.foo({ testParam: 'bar' })
@@ -59,8 +66,8 @@ describe('MethodWrapper', () => {
 
       const wrapped = await wrap('/test', test)
 
-      expect(wrapped.baz).to.be.undefined
-      expect(wrapped.$init).to.be.undefined
+      expect(wrapped.baz).toBeUndefined()
+      expect(wrapped.$init).toBeUndefined()
     })
 
     it('returns a frozen object', async () => {
@@ -70,7 +77,7 @@ describe('MethodWrapper', () => {
 
       const wrapped = await wrap('/test', test)
 
-      expect(Object.isFrozen(wrapped)).to.be.true
+      expect(Object.isFrozen(wrapped)).toBeTruthy()
     })
 
     it('does not wrap methods if they are deps', async () => {
@@ -81,26 +88,26 @@ describe('MethodWrapper', () => {
 
       const wrapped = await wrap('/test', test)
 
-      expect(wrapped.bar).to.be.undefined
+      expect(wrapped.bar).toBeUndefined()
     })
   })
 
   describe('doWrap', () => {
     it('is a function', () =>
-      expect(doWrap).to.be.a('function')
+      expect(typeof doWrap).toBe('function')
     )
 
     it('returns an AsyncFunction', () => {
       const fn = Object.getPrototypeOf(doWrap('/test')).constructor
 
-      expect(fn.name).to.equal('AsyncFunction')
+      expect(fn.name).toEqual('AsyncFunction')
     })
 
     it('returns a Promise from the returned AsyncFunction', () => {
       const delegate = doWrap('/test', { foo: () => {} }, 'foo')
       const fn = Object.getPrototypeOf(delegate()).constructor
 
-      expect(fn.name).to.equal('Promise')
+      expect(fn.name).toEqual('Promise')
     })
 
     it('invokes the specified property, using the passed self as the self param', async () => {
@@ -109,7 +116,7 @@ describe('MethodWrapper', () => {
       const wrapped  = doWrap('/test', instance, 'bar', self)
       const result   = await wrapped()
 
-      expect(result).to.equal(self.foo)
+      expect(result).toEqual(self.foo)
     })
 
     it('passes params through to the wrapped function', async () => {
@@ -118,7 +125,7 @@ describe('MethodWrapper', () => {
       const wrapped  = doWrap('/test', instance, 'bar', self)
       const result   = await wrapped({ example: 'param' })
 
-      expect(result).to.equal('param')
+      expect(result).toEqual('param')
     })
 
     it('rejects the Promise when the wrapped function throws an error', async () => {
@@ -129,7 +136,7 @@ describe('MethodWrapper', () => {
       try {
         await wrapped()
       } catch (e) {
-        expect(e.message).to.equal('BOOM')
+        expect(e.message).toEqual('BOOM')
       }
     })
 
@@ -139,20 +146,20 @@ describe('MethodWrapper', () => {
       const wrapped  = doWrap('/test', instance, 'bar', self)
       const result   = await wrapped()
 
-      expect(result).to.equal('whew!')
+      expect(result).toEqual('whew!')
     })
   })
 
   describe('validate', () => {
     it('is a function', () =>
-      expect(validate).to.be.a('function')
+      expect(typeof validate).toBe('function')
     )
 
     it('throws an error if passed an array', () => {
       try {
         validate([])
       } catch (e) {
-        expect(e.message).to.equal('An array cannot be wrapped')
+        expect(e.message).toEqual('An array cannot be wrapped')
       }
     })
 
@@ -160,7 +167,7 @@ describe('MethodWrapper', () => {
       try {
         validate('foo')
       } catch (e) {
-        expect(e.message).to.equal('string is not a valid type')
+        expect(e.message).toEqual('string is not a valid type')
       }
     })
 
@@ -168,7 +175,7 @@ describe('MethodWrapper', () => {
       try {
         validate(4)
       } catch (e) {
-        expect(e.message).to.equal('number is not a valid type')
+        expect(e.message).toEqual('number is not a valid type')
       }
     })
 
@@ -176,7 +183,7 @@ describe('MethodWrapper', () => {
       try {
         validate(false)
       } catch (e) {
-        expect(e.message).to.equal('boolean is not a valid type')
+        expect(e.message).toEqual('boolean is not a valid type')
       }
     })
 
@@ -184,7 +191,7 @@ describe('MethodWrapper', () => {
       try {
         validate(null)
       } catch (e) {
-        expect(e.message).to.equal('Cannot wrap null')
+        expect(e.message).toEqual('Cannot wrap null')
       }
     })
 
@@ -192,7 +199,7 @@ describe('MethodWrapper', () => {
       try {
         validate()
       } catch (e) {
-        expect(e.message).to.equal('Cannot wrap undefined')
+        expect(e.message).toEqual('Cannot wrap undefined')
       }
     })
 
@@ -200,7 +207,7 @@ describe('MethodWrapper', () => {
       try {
         validate({})
       } catch (e) {
-        expect(e.message).to.equal('instance must contain at least one functional property')
+        expect(e.message).toEqual('instance must contain at least one functional property')
       }
     })
   })

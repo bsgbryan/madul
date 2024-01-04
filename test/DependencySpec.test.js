@@ -1,3 +1,9 @@
+import {
+  describe,
+  expect,
+  it,
+} from "bun:test"
+
 const {
   SCOPE,
   parse,
@@ -10,196 +16,196 @@ const extractInitializerAndPrerequisites = require('../lib/DependencySpec/extrac
 describe('DependencySpec', () => {
   describe('extractScopeAndHandle', () => {
     it('is a function', () =>
-      expect(extractScopeAndHandle).to.be.a('function')
+      expect(typeof extractScopeAndHandle).toBe('function')
     )
 
     it('returns SCOPE.LOCAL when . is specified', () => {
       const [scope, _] = extractScopeAndHandle('/test', SCOPE)
 
-      expect(scope).to.equal(SCOPE.LOCAL)
+      expect(scope).toEqual(SCOPE.LOCAL)
     })
 
     it('returns SCOPE.DEFAULT when nothing is specified', () => {
       const [scope, _] = extractScopeAndHandle('test', SCOPE)
 
-      expect(scope).to.equal(SCOPE.DEFAULT)
+      expect(scope).toEqual(SCOPE.DEFAULT)
     })
 
     it('returns the value of the handle specified', () => {
       const [_, handle] = extractScopeAndHandle('/test', SCOPE)
 
-      expect(handle).to.equal('test')
+      expect(handle).toEqual('test')
     })
   })
 
   describe('extractInitializerAndPrerequisites', () => {
     it('is a function', () =>
-      expect(extractInitializerAndPrerequisites).to.be.a('function')
+      expect(typeof extractInitializerAndPrerequisites).toBe('function')
     )
 
     it('returns the initializer specified', () => {
       const [initializerZero, _] = extractInitializerAndPrerequisites('init')
 
-      expect(initializerZero).to.equal('init')
+      expect(initializerZero).toEqual('init')
 
       const [initializerOne, __] = extractInitializerAndPrerequisites('init:foo')
 
-      expect(initializerOne).to.equal('init')
+      expect(initializerOne).toEqual('init')
     })
 
     it('returns the preqrequisites specified, as an array', () => {
       const [_, prerequisitesZero] = extractInitializerAndPrerequisites('init')
 
-      expect(prerequisitesZero.length).to.equal(0)
+      expect(prerequisitesZero.length).toEqual(0)
 
       const [__, prerequisitesOne] = extractInitializerAndPrerequisites('init:foo,bar')
 
-      expect(prerequisitesOne.length).to.equal(2)
+      expect(prerequisitesOne.length).toEqual(2)
     })
 
     it('preserves the order of the prerequisites specified', () => {
       const [_, prerequisites] = extractInitializerAndPrerequisites('init:foo,bar')
 
-      expect(prerequisites[0]).to.equal('foo')
-      expect(prerequisites[1]).to.equal('bar')
+      expect(prerequisites[0]).toEqual('foo')
+      expect(prerequisites[1]).toEqual('bar')
     })
   })
 
   describe('parse', () => {
     it('is a function', () =>
-      expect(parse).to.be.a('function')
+      expect(typeof parse).toBe('function')
     )
 
     it('returns the correct data when only a handle is specified', () => {
       const parsed = parse('test')
 
-      expect(parsed.ref).to.equal('test')
-      expect(parsed.alias).to.be.undefined
-      expect(parsed.scope).to.equal(SCOPE.DEFAULT)
-      expect(parsed.handle).to.equal('test')
-      expect(parsed.initializer).to.be.undefined
-      expect(parsed.prerequisites.length).to.equal(0)
+      expect(parsed.ref).toEqual('test')
+      expect(parsed.alias).toBeUndefined()
+      expect(parsed.scope).toEqual(SCOPE.DEFAULT)
+      expect(parsed.handle).toEqual('test')
+      expect(parsed.initializer).toBeUndefined()
+      expect(parsed.prerequisites.length).toEqual(0)
     })
 
     it('returns the correct data when a handle and scope are specified', () => {
       const parsed = parse('/test')
 
-      expect(parsed.ref).to.equal('test')
-      expect(parsed.alias).to.be.undefined
-      expect(parsed.scope).to.equal(SCOPE.LOCAL)
-      expect(parsed.handle).to.equal('test')
-      expect(parsed.initializer).to.be.undefined
-      expect(parsed.prerequisites.length).to.equal(0)
+      expect(parsed.ref).toEqual('test')
+      expect(parsed.alias).toBeUndefined()
+      expect(parsed.scope).toEqual(SCOPE.LOCAL)
+      expect(parsed.handle).toEqual('test')
+      expect(parsed.initializer).toBeUndefined()
+      expect(parsed.prerequisites.length).toEqual(0)
     })
 
     it('returns the correct data when a handle and alias are specified', () => {
       const parsed = parse('test -> TEST')
 
-      expect(parsed.ref).to.equal('TEST')
-      expect(parsed.alias).to.equal('TEST')
-      expect(parsed.scope).to.equal(SCOPE.DEFAULT)
-      expect(parsed.handle).to.equal('test')
-      expect(parsed.initializer).to.be.undefined
-      expect(parsed.prerequisites.length).to.equal(0)
+      expect(parsed.ref).toEqual('TEST')
+      expect(parsed.alias).toEqual('TEST')
+      expect(parsed.scope).toEqual(SCOPE.DEFAULT)
+      expect(parsed.handle).toEqual('test')
+      expect(parsed.initializer).toBeUndefined()
+      expect(parsed.prerequisites.length).toEqual(0)
     })
 
     it('returns the correct data when a handle, alias, and initializer are specified', () => {
       const parsed = parse('test -> TEST = init')
 
-      expect(parsed.ref).to.equal('TEST')
-      expect(parsed.alias).to.equal('TEST')
-      expect(parsed.scope).to.equal(SCOPE.DEFAULT)
-      expect(parsed.handle).to.equal('test')
-      expect(parsed.initializer).to.equal('init')
-      expect(parsed.prerequisites.length).to.equal(0)
+      expect(parsed.ref).toEqual('TEST')
+      expect(parsed.alias).toEqual('TEST')
+      expect(parsed.scope).toEqual(SCOPE.DEFAULT)
+      expect(parsed.handle).toEqual('test')
+      expect(parsed.initializer).toEqual('init')
+      expect(parsed.prerequisites.length).toEqual(0)
     })
 
     it('returns the correct data when a handle, alias, initializer, and prerequisites are specified', () => {
       const parsed = parse('test -> TEST = init:foo,bar,baz')
 
-      expect(parsed.ref).to.equal('TEST')
-      expect(parsed.alias).to.equal('TEST')
-      expect(parsed.scope).to.equal(SCOPE.DEFAULT)
-      expect(parsed.handle).to.equal('test')
-      expect(parsed.initializer).to.equal('init')
-      expect(parsed.prerequisites.length).to.equal(3)
-      expect(parsed.prerequisites[0]).to.equal('foo')
-      expect(parsed.prerequisites[1]).to.equal('bar')
-      expect(parsed.prerequisites[2]).to.equal('baz')
+      expect(parsed.ref).toEqual('TEST')
+      expect(parsed.alias).toEqual('TEST')
+      expect(parsed.scope).toEqual(SCOPE.DEFAULT)
+      expect(parsed.handle).toEqual('test')
+      expect(parsed.initializer).toEqual('init')
+      expect(parsed.prerequisites.length).toEqual(3)
+      expect(parsed.prerequisites[0]).toEqual('foo')
+      expect(parsed.prerequisites[1]).toEqual('bar')
+      expect(parsed.prerequisites[2]).toEqual('baz')
     })
 
     it('returns the correct data when a handle, initializer, and prerequisites are specified', () => {
       const parsed = parse('test = init:foo,bar,baz')
 
-      expect(parsed.ref).to.equal('test')
-      expect(parsed.alias).to.be.undefined
-      expect(parsed.scope).to.equal(SCOPE.DEFAULT)
-      expect(parsed.handle).to.equal('test')
-      expect(parsed.initializer).to.equal('init')
-      expect(parsed.prerequisites.length).to.equal(3)
-      expect(parsed.prerequisites[0]).to.equal('foo')
-      expect(parsed.prerequisites[1]).to.equal('bar')
-      expect(parsed.prerequisites[2]).to.equal('baz')
+      expect(parsed.ref).toEqual('test')
+      expect(parsed.alias).toBeUndefined()
+      expect(parsed.scope).toEqual(SCOPE.DEFAULT)
+      expect(parsed.handle).toEqual('test')
+      expect(parsed.initializer).toEqual('init')
+      expect(parsed.prerequisites.length).toEqual(3)
+      expect(parsed.prerequisites[0]).toEqual('foo')
+      expect(parsed.prerequisites[1]).toEqual('bar')
+      expect(parsed.prerequisites[2]).toEqual('baz')
     })
 
     it('returns the correct data when a handle, scope, initializer, and prerequisites are specified', () => {
       const parsed = parse('/test = init:foo,bar')
 
-      expect(parsed.ref).to.equal('test')
-      expect(parsed.alias).to.be.undefined
-      expect(parsed.scope).to.equal(SCOPE.LOCAL)
-      expect(parsed.handle).to.equal('test')
-      expect(parsed.initializer).to.equal('init')
-      expect(parsed.prerequisites.length).to.equal(2)
-      expect(parsed.prerequisites[0]).to.equal('foo')
-      expect(parsed.prerequisites[1]).to.equal('bar')
+      expect(parsed.ref).toEqual('test')
+      expect(parsed.alias).toBeUndefined()
+      expect(parsed.scope).toEqual(SCOPE.LOCAL)
+      expect(parsed.handle).toEqual('test')
+      expect(parsed.initializer).toEqual('init')
+      expect(parsed.prerequisites.length).toEqual(2)
+      expect(parsed.prerequisites[0]).toEqual('foo')
+      expect(parsed.prerequisites[1]).toEqual('bar')
     })
 
     it('returns the correct data when functions are specified', () => {
       const parsed = parse('test[foo,bar,baz,bang]')
 
-      expect(parsed.ref).to.equal('test')
-      expect(parsed.functions.length).to.equal(4)
-      expect(parsed.functions[0]).to.equal('foo')
-      expect(parsed.functions[1]).to.equal('bar')
-      expect(parsed.functions[2]).to.equal('baz')
-      expect(parsed.functions[3]).to.equal('bang')
+      expect(parsed.ref).toEqual('test')
+      expect(parsed.functions.length).toEqual(4)
+      expect(parsed.functions[0]).toEqual('foo')
+      expect(parsed.functions[1]).toEqual('bar')
+      expect(parsed.functions[2]).toEqual('baz')
+      expect(parsed.functions[3]).toEqual('bang')
 
-      expect(parsed.alias).to.be.undefined
-      expect(parsed.scope).to.equal(SCOPE.DEFAULT)
-      expect(parsed.handle).to.equal('test')
-      expect(parsed.initializer).to.be.undefined
-      expect(parsed.prerequisites.length).to.equal(0)
+      expect(parsed.alias).toBeUndefined()
+      expect(parsed.scope).toEqual(SCOPE.DEFAULT)
+      expect(parsed.handle).toEqual('test')
+      expect(parsed.initializer).toBeUndefined()
+      expect(parsed.prerequisites.length).toEqual(0)
     })
 
     it('ignores whitespace', () => {
       const parsed = parse(' / test   = init : foo ,     bar ')
 
-      expect(parsed.ref).to.equal('test')
-      expect(parsed.alias).to.be.undefined
-      expect(parsed.scope).to.equal(SCOPE.LOCAL)
-      expect(parsed.handle).to.equal('test')
-      expect(parsed.initializer).to.equal('init')
-      expect(parsed.prerequisites.length).to.equal(2)
-      expect(parsed.prerequisites[0]).to.equal('foo')
-      expect(parsed.prerequisites[1]).to.equal('bar')
+      expect(parsed.ref).toEqual('test')
+      expect(parsed.alias).toBeUndefined()
+      expect(parsed.scope).toEqual(SCOPE.LOCAL)
+      expect(parsed.handle).toEqual('test')
+      expect(parsed.initializer).toEqual('init')
+      expect(parsed.prerequisites.length).toEqual(2)
+      expect(parsed.prerequisites[0]).toEqual('foo')
+      expect(parsed.prerequisites[1]).toEqual('bar')
     })
   })
 
   describe('build', () => {
     it('is a function', () =>
-      expect(build).to.be.a('function')
+      expect(typeof build).toBe('function')
     )
 
     describe('The handle argument', () => {
       it('is required', () =>
         expect(() => build({ handle: undefined })).
-        to.throw('A non-empty handle is required to create a Dependency Spec')
+        toThrow('A non-empty handle is required to create a Dependency Spec')
       )
 
       it('is the only ouput token when it is the only input token', () =>
         expect(build({ handle: 'test' })).
-        to.equal('test')
+        toEqual('test')
       )
 
       it('immediately precedes the alias when one is specified', () =>
@@ -208,7 +214,7 @@ describe('DependencySpec', () => {
             handle: 'test',
             alias:  'TEST'
           })
-        ).to.equal('test -> TEST')
+        ).toEqual('test -> TEST')
       )
 
       it('immediately precedes the initializer when one is specified (without an alias being specified)', () =>
@@ -217,7 +223,7 @@ describe('DependencySpec', () => {
             handle:      'test',
             initializer: 'init'
           })
-        ).to.equal('test = init')
+        ).toEqual('test = init')
       )
     })
 
@@ -228,7 +234,7 @@ describe('DependencySpec', () => {
             handle: 'test',
             alias:  undefined
           })
-        ).to.equal('test')
+        ).toEqual('test')
       )
 
       it('immediately follows the alias token when specified', () =>
@@ -237,7 +243,7 @@ describe('DependencySpec', () => {
             handle: 'test',
             alias: 'TEST'
           })
-        ).to.equal('test -> TEST')
+        ).toEqual('test -> TEST')
       )
 
       it('immediately precedes the initializer when one is specified', () =>
@@ -247,7 +253,7 @@ describe('DependencySpec', () => {
             initializer: 'init',
             alias:       'TEST'
           })
-        ).to.equal('test -> TEST = init')
+        ).toEqual('test -> TEST = init')
       )
     })
 
@@ -258,7 +264,7 @@ describe('DependencySpec', () => {
             handle:     'test',
             initializer: undefined
           })
-        ).to.equal('test')
+        ).toEqual('test')
       )
 
       it('immediately follows the handle when no alias is specified', () =>
@@ -267,7 +273,7 @@ describe('DependencySpec', () => {
             handle:      'test',
             initializer: 'init'
           })
-        ).to.equal('test = init')
+        ).toEqual('test = init')
       )
 
       it('immediately follows the alias when one is specified', () =>
@@ -277,7 +283,7 @@ describe('DependencySpec', () => {
             alias:       'TEST',
             initializer: 'init'
           })
-        ).to.equal('test -> TEST = init')
+        ).toEqual('test -> TEST = init')
       )
     })
 
@@ -289,7 +295,7 @@ describe('DependencySpec', () => {
             initializer:    undefined,
             prerequisites: ['foo']
           })
-        ).to.throw('Prerequisites require an initializer')
+        ).toThrow('Prerequisites require an initializer')
       )
 
       it('immediately follows the initializer when one is specified', () =>
@@ -299,7 +305,7 @@ describe('DependencySpec', () => {
             initializer:   'init',
             prerequisites: ['foo']
           })
-        ).to.equal('test = init:foo')
+        ).toEqual('test = init:foo')
       )
 
       it('seperates prerequisites using commas in the output', () =>
@@ -309,7 +315,7 @@ describe('DependencySpec', () => {
             initializer:   'init',
             prerequisites: ['foo', 'bar']
           })
-        ).to.equal('test = init:foo,bar')
+        ).toEqual('test = init:foo,bar')
       )
 
       it('outputs prerequisites in the same order they are specified', () =>
@@ -319,7 +325,7 @@ describe('DependencySpec', () => {
             initializer:   'init',
             prerequisites: ['second', 'first']
           })
-        ).to.equal('test = init:second,first')
+        ).toEqual('test = init:second,first')
       )
     })
   })

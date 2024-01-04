@@ -1,10 +1,16 @@
+import {
+  describe,
+  expect,
+  it,
+} from "bun:test"
+
 const bootstrap           = require('../lib/Bootstrapper')
 const executeInitializers = require('../lib/Bootstrapper/executeInitializers')
 
 describe('Madul', () => {
   describe('executeInitializers', () => {
     it('is a function', () =>
-      expect(executeInitializers).to.be.a('function')
+      expect(typeof executeInitializers).toBe('function')
     )
 
     it('executes all methods starting with a $ found on a wrapped object', async () => {
@@ -20,13 +26,13 @@ describe('Madul', () => {
 
       await executeInitializers(ready)
       
-      expect(calls).to.equal(2)
+      expect(calls).toEqual(2)
     })
   })
 
   describe('bootstrap', () => {
     it('is a function', () =>
-      expect(bootstrap).to.be.a('function')
+      expect(typeof bootstrap).toBe('function')
     )
   })
 })
