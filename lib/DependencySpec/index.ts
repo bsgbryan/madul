@@ -1,20 +1,25 @@
-const { strip } = require('../helpers')
+import {
+  BuildProps,
+  Spec,
+} from "./types"
 
-const extractInitializerAndPrerequisites = require('./extractInitializerAndPrerequisites')
-const extractScopeAndHandle              = require('./extractScopeAndHandle')
+import { strip } from "../helpers"
 
-const SCOPE = Object.freeze({
+import extractInitializerAndPrerequisites from "./extractInitializerAndPrerequisites"
+import extractScopeAndHandle              from "./extractScopeAndHandle"
+
+export const SCOPE = Object.freeze({
   LOCAL:   '/',
   DEFAULT: ''
 })
 
-const parse = spec => {
+export const parse = (spec: string): Spec => {
   const spacelessSpec = spec.replace(/\s+/g, '')
 
   const [identifier , before       ] = spacelessSpec.split('=')
   const [searchable , alias        ] = identifier.split('->')
-  const [scope      , handle       ] = extractScopeAndHandle(searchable, SCOPE)
-  const [initializer, prerequisites] = extractInitializerAndPrerequisites(before)
+  const [scope      , handle       ] = extractScopeAndHandle(searchable)
+  const {initializer, prerequisites} = extractInitializerAndPrerequisites(before)
   
   const list      = identifier.split('[')[1]
   const functions = list?.
@@ -32,13 +37,13 @@ const parse = spec => {
   }
 }
 
-const build = ({
+export const build = ({
   alias,
   handle,
   searchRoot = '',
   initializer,
-  prerequisites
-}) => {
+  prerequisites,
+}: BuildProps) => {
   if (typeof handle !== 'string' || strip(handle)?.length === 0)
     throw new Error('A non-empty handle is required to create a Dependency Spec')
   
@@ -58,7 +63,3 @@ const build = ({
 
   return spec
 }
-
-exports.SCOPE = SCOPE
-exports.parse = parse
-exports.build = build

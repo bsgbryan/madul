@@ -4,8 +4,8 @@ import {
   it,
 } from "bun:test"
 
-const load    = require('../lib/Loader')
-const hydrate = require('../lib/DependencyHydrator')
+import load    from "../lib/Loader"
+import hydrate from "../lib/DependencyHydrator"
 
 describe('DependencyHydrator', () => {
   describe('hydrate', () => {
@@ -20,7 +20,7 @@ describe('DependencyHydrator', () => {
     })
 
     it('returns a Promise', () => {
-      const fn = Object.getPrototypeOf(hydrate()).constructor
+      const fn = Object.getPrototypeOf(hydrate([])).constructor
 
       expect(fn.name).toEqual('Promise')
     })
