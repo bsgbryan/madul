@@ -1,10 +1,16 @@
-const { each } = require('async')
+import { each } from "async"
 
-const { parse } = require('./DependencySpec')
+import { parse } from "./DependencySpec"
 
-const hydrate = async (deps, params = {}, root = process.cwd()) => {
+import { MadulDictionary } from "./types"
+
+const hydrate = async (
+  deps: Array<string>,
+  params = {},
+  root = process.cwd(),
+): Promise<MadulDictionary> => {
   return new Promise(async (resolve, reject) => {
-    const output = { }
+    const output: MadulDictionary = { }
 
     await each(deps, async d => {
       const { ref, functions } = parse(d)
@@ -13,8 +19,8 @@ const hydrate = async (deps, params = {}, root = process.cwd()) => {
         const initialized = await require('./Bootstrapper')(d, params, { root })
 
         if (functions.length > 0)
-          functions.forEach(f => {
-            const {ref, handle } = parse(f)
+          functions.forEach((f: string) => {
+            const { ref, handle } = parse(f)
 
             output[ref] = initialized[handle]
           })
@@ -28,4 +34,4 @@ const hydrate = async (deps, params = {}, root = process.cwd()) => {
   })
 }
 
-module.exports = hydrate
+export default hydrate
