@@ -31,7 +31,7 @@ describe('DependencyHydrator', () => {
       expect(Object.keys(output).length).toEqual(1)
       expect(Object.keys(output)[0]).toEqual('async')
       expect(typeof output.async).toBe('object')
-      expect(typeof output.async.each).toBe('function')
+      expect(typeof output.async?.each).toBe('function')
     })
 
     describe('when functions are specified', () => {
@@ -52,19 +52,19 @@ describe('DependencyHydrator', () => {
 
     it('returns the madul with all deps ready to go', async () => {
       const loaded   = await load('/hasDeps', { root: process.cwd() })
-      const hydrated = await hydrate(loaded.deps)
+      const hydrated = await hydrate(loaded.deps || [])
 
       expect(typeof hydrated.exampleDep).toBe('object')
-      expect(typeof hydrated.exampleDep.foo).toBe('function')
-      expect(typeof hydrated.exampleDep.bar).toBe('function')
-      expect(typeof hydrated.exampleDep.baz).toBe('function')
-      expect(typeof hydrated.exampleDep.bang).toBe('function')
+      expect(typeof hydrated.exampleDep?.foo).toBe('function')
+      expect(typeof hydrated.exampleDep?.bar).toBe('function')
+      expect(typeof hydrated.exampleDep?.baz).toBe('function')
+      expect(typeof hydrated.exampleDep?.bang).toBe('function')
 
       expect(typeof hydrated.anotherExampleDep).toBe('object')
-      expect(typeof hydrated.anotherExampleDep.biff).toBe('function')
-      expect(typeof hydrated.anotherExampleDep.buzz).toBe('function')
-      expect(typeof hydrated.anotherExampleDep.boom).toBe('function')
-      expect(typeof hydrated.anotherExampleDep.boff).toBe('function')
+      expect(typeof hydrated.anotherExampleDep?.biff).toBe('function')
+      expect(typeof hydrated.anotherExampleDep?.buzz).toBe('function')
+      expect(typeof hydrated.anotherExampleDep?.boom).toBe('function')
+      expect(typeof hydrated.anotherExampleDep?.boff).toBe('function')
     })
   })
 })

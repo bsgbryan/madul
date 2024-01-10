@@ -1,5 +1,5 @@
 const extractInitializerAndPrerequisites = (
-  before: string,
+  before?: string,
 ) => {
   const [initializer, prerequisites] = before?.split(':') || [ ]
 

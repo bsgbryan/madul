@@ -6,20 +6,20 @@ import {
   it,
 } from "bun:test"
 
-const {
-  get,
+import {
   init,
-  resetAll,
-} = require('../lib/DecoratorManager')
+  managed,
+  reset,
+} from "../lib/CollectionManager"
 
-const {
+import {
   processBundle,
   processAllBundles,
-} = require('../lib/BundleProcessor')
+}  from "../lib/BundleProcessor"
 
 describe('BundleProcessor', () => {
-  beforeEach(() => init('/example'))
-  afterEach(resetAll)
+  beforeEach(() => init('/example::DECORATORS'))
+  afterEach(() => reset('/example::DECORATORS'))
 
   describe('processBundle', () => {
     it('is a function', () =>
@@ -27,14 +27,16 @@ describe('BundleProcessor', () => {
     )
 
     it('adds the decorators listed in the specified bundle to the specified spec', async () => {
-      const decorators = get('/example')
+      const decorators = managed<{key: string}>('/example::DECORATORS')
 
-      expect(decorators.length).toEqual(0)
+      expect(decorators?.length).toEqual(0)
 
       await processBundle('/example', 'example.bundle.js')
 
-      expect(decorators.length).toEqual(1)
-      expect(decorators[0].key).toEqual('/decorator')
+      expect(decorators?.length).toEqual(1)
+
+      if (decorators)
+        expect(decorators[0].key).toEqual('/decorator')
     })
 
     it("throws an error when the specified bundle file doesn't exist", async () => {
@@ -49,13 +51,13 @@ describe('BundleProcessor', () => {
     )
 
     it('adds the decorators from all bundles to the specified spec', async () => {
-      const decorators = get('/example')
+      const decorators = managed<{key: string}>('/example::DECORATORS')
 
-      expect(decorators.length).toEqual(0)
+      expect(decorators?.length).toEqual(0)
 
       await processAllBundles('/example')
 
-      expect(decorators.length).toEqual(2)
+      expect(decorators?.length).toEqual(2)
     })
   })
 })

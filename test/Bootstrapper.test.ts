@@ -4,8 +4,8 @@ import {
   it,
 } from "bun:test"
 
-const bootstrap           = require('../lib/Bootstrapper')
-const executeInitializers = require('../lib/Bootstrapper/executeInitializers')
+import bootstrap           from "../lib/Bootstrapper"
+import executeInitializers from "../lib/Bootstrapper/executeInitializers"
 
 describe('Madul', () => {
   describe('executeInitializers', () => {

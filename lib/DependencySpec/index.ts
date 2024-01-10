@@ -3,15 +3,17 @@ import {
   Spec,
 } from "./types"
 
-import { strip } from "../helpers"
-
 import extractInitializerAndPrerequisites from "./extractInitializerAndPrerequisites"
 import extractScopeAndHandle              from "./extractScopeAndHandle"
 
-export const SCOPE = Object.freeze({
-  LOCAL:   '/',
-  DEFAULT: ''
-})
+export const SCOPE = {
+  LOCAL:    '/',
+  DEFAULT:  '',
+  INTERNAL: '::',
+}
+
+export const strip = (name: string) =>
+  name?.toLowerCase()?.replace(/\W+/g, '')
 
 export const parse = (spec: string): Spec => {
   const spacelessSpec = spec.replace(/\s+/g, '')
@@ -20,7 +22,7 @@ export const parse = (spec: string): Spec => {
   const [searchable , alias        ] = identifier.split('->')
   const [scope      , handle       ] = extractScopeAndHandle(searchable)
   const {initializer, prerequisites} = extractInitializerAndPrerequisites(before)
-  
+
   const list      = identifier.split('[')[1]
   const functions = list?.
     substring(0, list.length - 1)?.

@@ -5,7 +5,7 @@ import {
   it,
 } from "bun:test"
 
-const {
+import {
   add,
   get,
   init,
@@ -14,7 +14,7 @@ const {
   getAll,
   addAll,
   resetAll,
-} = require('../lib/CollectionManager')('test', { })
+} from "../lib/CollectionManager"
 
 init('/example')
 init('/decorator')

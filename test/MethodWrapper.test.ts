@@ -2,31 +2,17 @@ import {
   describe,
   expect,
   it,
-  afterEach,
 } from "bun:test"
-
-import {
-  init,
-  resetAll,
-} from "../lib/DecoratorManager"
 
 import {
   wrap,
   doWrap,
   validate
 } from "../lib/MethodWrapper"
+
 import { Madul } from "../lib/types"
 
-/*
-  IMPORTANT: We *must* initialize the decorators collection
-             for /test before the tests, otherwise we'll get
-             a bunch of errors.
- */
-init('/test')
-
 describe('MethodWrapper', () => {
-  afterEach(resetAll)
-
   describe('wrap', () => {
     it('is a function', () =>
       expect(typeof wrap).toBe('function')

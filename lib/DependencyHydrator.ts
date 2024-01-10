@@ -1,5 +1,7 @@
 import { each } from "async"
 
+import Bootstrap from "./Bootstrapper"
+
 import { parse } from "./DependencySpec"
 
 import { MadulDictionary } from "./types"
@@ -16,7 +18,7 @@ const hydrate = async (
       const { ref, functions } = parse(d)
 
       try {
-        const initialized = await require('./Bootstrapper')(d, params, { root })
+        const initialized = await Bootstrap(d, params, { root })
 
         if (functions.length > 0)
           functions.forEach((f: string) => {

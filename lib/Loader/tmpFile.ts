@@ -1,17 +1,20 @@
-const {
+import {
   stat,
   mkdir,
   readFile,
   writeFile,
-} = require('fs').promises
+} from "node:fs/promises"
 
-const { writeFileSync } = require('fs')
+import { writeFileSync } from "fs"
 
-const { isPrimary } = require('cluster')
+import cluster from "cluster"
 
-const { fromCWD } = require('../SourceLocator')
+import { fromCWD } from "../SourceLocator"
 
-const wrap = (source, location) => `
+export const wrap = (
+  source:   string,
+  location = '',
+) => `
 module.exports = sdk => {
 
 ${source.
@@ -24,13 +27,14 @@ return madul
 }
 `
 
-const createTmpFileOnlyIfItDoesntExist = async (
-  loadFile,
-  loadPath,
-  wrapped
+export const createTmpFileOnlyIfItDoesntExist = async (
+  loadFile: string,
+  loadPath: string,
+  wrapped:  string,
 ) => {
   try { await stat(loadFile) }
   catch (e) {
+    // @ts-ignore
     if (e.code === 'ENOENT') {
       await mkdir(loadPath, { recursive: true })
       await writeFile(loadFile, wrapped)
@@ -38,7 +42,10 @@ const createTmpFileOnlyIfItDoesntExist = async (
   }
 }
 
-const createTmpFile = (ref, root) =>
+const createTmpFile = (
+  ref: string,
+  root: string,
+): Promise<string> =>
   new Promise(async (resolve, _) => {
     const location = await fromCWD(ref, root)
 
@@ -59,9 +66,10 @@ const createTmpFile = (ref, root) =>
 
     const wrapped = wrap(source, fullPath)
 
-    if (isPrimary) {
+    if (cluster.isPrimary) {
       try { await stat(loadFile) }
       catch (e) {
+        // @ts-ignore
         if (e.code === 'ENOENT') {
           await mkdir(loadPath, { recursive: true })
           await writeFile(loadFile, wrapped)
@@ -72,6 +80,7 @@ const createTmpFile = (ref, root) =>
     else {
       try { await stat(loadFile) }
       catch (e) {
+        // @ts-ignore
         if (e.code === 'ENOENT') {
           try {
             await mkdir(loadPath, { recursive: true })
@@ -87,7 +96,4 @@ const createTmpFile = (ref, root) =>
     }
   })
 
-createTmpFile.wrap                             = wrap
-createTmpFile.createTmpFileOnlyIfItDoesntExist = createTmpFileOnlyIfItDoesntExist
-
-module.exports = createTmpFile
+export default createTmpFile
