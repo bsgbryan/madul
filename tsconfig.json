@@ -4,7 +4,8 @@
     "@tsconfig/node-lts/tsconfig.json"
   ],
   "include": [
-    "./lib/**/*"
+    "./lib/**/*",
+    "./sdk/**/*"
   ],
   "compilerOptions": {
     "types": ["bun-types"]

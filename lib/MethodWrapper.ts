@@ -11,32 +11,31 @@ import {
   // @ts-ignore
 } from "../sdk/Invokation"
 
-  // @ts-ignore
-import { parse   } from "./DependencySpec"
-// @ts-ignore
-import { execute } from "./DecoratorManager"
+import { parse } from "./DependencySpec"
+
+import DecoratorManager from "./DecoratorManager"
 
 export const doWrap = (
   spec: string,
-  instance?: Madul,
-  method?: string,
+  instance: Madul,
+  method: string,
   self?: Madul,
 ) =>
   async (params?: ParameterSet) =>
     new Promise(async (resolve, reject) => {
-      const args       = { ...params, ...instance?.hydrated }
+      const args       = { ...params, ...instance?.hydrated } as ParameterSet
       const invokation = record()
       const progress   = (params: ParameterSet) => invokation.update(spec, method, params)
 
       let doneCalled = false
 
-      const done = async (result: unknown) => {
+      const done = async (output: ParameterSet) => {
         doneCalled = true
 
         try {
-          await execute({ mode: 'after', result, spec, method })
-          invokation.complete(spec, method, result)
-          resolve(result)
+          await DecoratorManager({ mode: 'after', output, spec, method })
+          invokation.complete(spec, method, output)
+          resolve(output)
         }
         catch (e) {
           invokation.fail(spec, method, e)
@@ -45,7 +44,7 @@ export const doWrap = (
       }
 
       try {
-        await execute({ mode: 'before', args, spec, method })
+        await DecoratorManager({ mode: 'before', params: args, spec, method })
         invokation.invoke(spec, method, args)
 
         // @ts-ignore
@@ -53,7 +52,7 @@ export const doWrap = (
 
         process.nextTick(async () => {
           if (doneCalled === false)
-            await done(result)
+            await done(result as ParameterSet)
         })
       }
       catch (e) {

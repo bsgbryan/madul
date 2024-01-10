@@ -19,15 +19,17 @@ const ignore = [
 export const fromNodeModules = async (ref: string, root: string) => {
   const path = `${root}/node_modules/${ref}`
   const pkg  = `${path}/package.json`
-  const s    = await stat(pkg)
 
-  if (s.isFile()) {
-    const data = await readFile(pkg, 'utf8')
-    const json = JSON.parse(data)
-    const main = json.main || json._main || 'index.js'
-
-    return `${path}/${main}`
+  try {
+    if ((await stat(pkg)).isFile()) {
+      const data = await readFile(pkg, 'utf8')
+      const json = JSON.parse(data)
+      const main = json.main || json._main || 'index.js'
+  
+      return `${path}/${main}`
+    }
   }
+  catch (e) { return undefined }
 }
 
 export const find = async (path: string, ref: string) => {
@@ -82,7 +84,10 @@ export const walk = async (root: string, ref: string, cb: CallableFunction) => {
     cb(match)
 }
 
-export const fromCWD = async (ref: string, root: string) =>
+export const fromCWD = async (
+  ref:  string,
+  root: string,
+): Promise<string> =>
   new Promise(async (resolve, reject) => {
     try {
       await walk(root, ref, (found: string) =>

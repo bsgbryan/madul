@@ -1,11 +1,16 @@
-const { each } = require('async')
+import { each } from "async"
 
-const executeInitializers = async (ready, params) =>
+import { Madul, ParameterSet } from "../types"
+
+const executeInitializers = async (
+  ready:   Madul,
+  params?: ParameterSet,
+) =>
   new Promise(async (resolve, reject) => {
     const $ = Object.keys(ready).filter(r => r[0] === '$')
 
     try {
-      const extra = {}
+      const extra = { } as Madul
 
       await each($, async i => {
         const e = await ready[i](params)
@@ -19,4 +24,4 @@ const executeInitializers = async (ready, params) =>
     catch (e) { reject(e) }
   })
 
-module.exports = executeInitializers
+export default executeInitializers

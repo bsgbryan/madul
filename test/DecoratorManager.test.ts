@@ -1,29 +1,23 @@
 import {
-  afterEach,
   describe,
   expect,
   it,
 } from "bun:test"
 
-const bootstrap = require('../lib/Bootstrapper')
+import Bootstrap from "../lib/Bootstrapper"
 
-const {
-  execute,
-  resetAll,
-} = require('../lib/DecoratorManager')
+import DecoratorManager from "../lib/DecoratorManager"
 
 describe('DecoratorManager', () => {
-  afterEach(resetAll)
-
   describe('execute', () => {
     it('is a function', () =>
-      expect(typeof execute).toBe('function')
+      expect(typeof DecoratorManager).toBe('function')
     )
 
     it('execute all decorators for a madul when any member is invoked', async () => {
-      const test   = await bootstrap('/test')
-      const before = await bootstrap('/testBefore')
-      const after  = await bootstrap('/testAfter')
+      const test   = await Bootstrap('/test')
+      const before = await Bootstrap('/testBefore')
+      const after  = await Bootstrap('/testAfter')
 
       await test.foo()
 

@@ -1,14 +1,15 @@
-import { Collection } from "./DependencySpec/types"
-
-import { each } from "async"
-
-export const strip = (name: string) =>
-  name?.toLowerCase()?.replace(/\W+/g, '')
+import {
+  get,
+  resetAll,
+} from "./CollectionManager"
 
 export const executeAndReset = async (
-  list: Collection,
   key: string,
+  item: string,
 ) => {
-  await each(list.get(key), async (fn: CallableFunction) => await fn())
-  list.reset(key)
+  const listener = get(key, item) as CallableFunction
+
+  if (listener) await listener()
+
+  resetAll(key)
 }
