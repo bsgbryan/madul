@@ -4,28 +4,89 @@ import {
   it,
 } from "bun:test"
 
-import Bootstrap from "../lib/Bootstrapper"
+import {
+  init,
+  manage,
+  managed,
+} from "../lib/CollectionManager"
 
-import DecoratorManager from "../lib/DecoratorManager"
+import {
+  Madul,
+  ParameterSet,
+} from "../lib/types"
+
+import Execute, {
+  add, remove,
+} from "../lib/DecoratorManager"
 
 describe('DecoratorManager', () => {
-  describe('execute', () => {
+  describe('add', () => {
     it('is a function', () =>
-      expect(typeof DecoratorManager).toBe('function')
+      expect(typeof add).toEqual('function')
+    )
+
+    it('adds a decorator for the specified madul spec', () => {
+      add('/test', { name: 'Test' })
+
+      const decorator = managed<Madul>('/test::DECORATORS')
+
+      expect(decorator?.length).toEqual(1)
+
+      if (decorator) {
+        expect(decorator[0].key).toEqual('Test')
+        expect(decorator[0].value).toEqual({ name: 'Test' })
+      }
+    })
+  })
+
+  describe('remove', () => {
+    it('is a function', () =>
+      expect(typeof remove).toEqual('function')
+    )
+
+    it('removes the specified decorator for the specified spec', () => {
+      add('/test', { name: 'Test' })
+
+      const decorator = managed<Madul>('/test::DECORATORS')
+
+      expect(decorator?.length).toEqual(1)
+
+      remove('/test', 'Test')
+
+      if (decorator) expect(decorator.length).toEqual(0)
+    })
+  })
+
+  describe('Execute', () => {
+    it('is a function', () =>
+      expect(typeof Execute).toBe('function')
     )
 
     it('execute all decorators for a madul when any member is invoked', async () => {
-      const test   = await Bootstrap('/test')
-      const before = await Bootstrap('/testBefore')
-      const after  = await Bootstrap('/testAfter')
+      init('/test::DECORATORS')
 
-      await test.foo()
+      let ran = false,
+          args: ParameterSet
 
-      const beforeRan = await before.didRun()
-      const afterRan  = await after.didRun()
+      manage<Madul>('/test::DECORATORS', {
+        key: "doesn't matter",
+        value: {
+          before: (params: ParameterSet) => {
+            args = params
+            ran  = true
+          }
+        }
+      })
 
-      expect(beforeRan).toBeTruthy()
-      expect(afterRan).toBeTruthy()
+      await Execute('/test', 'test', 'before')
+
+      expect(ran).toBeTruthy()
+      // @ts-ignore TS thinks this is being used before it's defined; it's not
+      expect(args).toEqual({
+        spec:   '/test',
+        method: 'test',
+        params:  undefined,
+      })
     })
   })
 })

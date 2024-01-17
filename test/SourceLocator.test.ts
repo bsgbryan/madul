@@ -51,7 +51,7 @@ describe('SourceLocator', () => {
     it('returns an array of directories to search beneath the passed path', async () => {
       const dirs = await recurse(process.cwd())
 
-      expect(dirs.length).toEqual(3)
+      expect(dirs.length).toEqual(2)
       expect(dirs[0]).toEqual(`${process.cwd()}/lib`)
       expect(dirs[1]).toEqual(`${process.cwd()}/scratch`)
     })

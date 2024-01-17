@@ -3,11 +3,11 @@
     "@tsconfig/bun/tsconfig.json",
     "@tsconfig/node-lts/tsconfig.json"
   ],
-  "include": [
-    "./lib/**/*",
-    "./sdk/**/*"
-  ],
   "compilerOptions": {
-    "types": ["bun-types"]
+    "types": ["bun-types"],
+    "paths": {
+      "@/*": ["./lib/*"],
+      "+/*": ["./scratch/*"]
+    }
   }
 }

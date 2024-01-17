@@ -1,19 +1,13 @@
+import { each } from "async"
+
+import { parse } from "./DependencySpec"
+
+import Execute from "./DecoratorManager"
+
 import {
   Madul,
   ParameterSet,
 } from "./types"
-
-import { each } from "async"
-
-import {
-  record,
-  bootstrap,
-  // @ts-ignore
-} from "../sdk/Invokation"
-
-import { parse } from "./DependencySpec"
-
-import DecoratorManager from "./DecoratorManager"
 
 export const doWrap = (
   spec: string,
@@ -23,9 +17,7 @@ export const doWrap = (
 ) =>
   async (params?: ParameterSet) =>
     new Promise(async (resolve, reject) => {
-      const args       = { ...params, ...instance?.hydrated } as ParameterSet
-      const invokation = record()
-      const progress   = (params: ParameterSet) => invokation.update(spec, method, params)
+      const args = { ...params, ...instance?.hydrated } as ParameterSet
 
       let doneCalled = false
 
@@ -33,32 +25,24 @@ export const doWrap = (
         doneCalled = true
 
         try {
-          await DecoratorManager({ mode: 'after', output, spec, method })
-          invokation.complete(spec, method, output)
+          await Execute(spec, method, 'after', undefined, output)
+
           resolve(output)
         }
-        catch (e) {
-          invokation.fail(spec, method, e)
-          reject(e)
-        }
+        catch (e) { reject(e) }
       }
 
       try {
-        await DecoratorManager({ mode: 'before', params: args, spec, method })
-        invokation.invoke(spec, method, args)
+        await Execute(spec, method, 'before', args)
 
-        // @ts-ignore
-        const result = await instance[method].call(null, { ...args, self, done, progress })
+        const result = await instance[method].call(null, { ...args, self, done })
 
         process.nextTick(async () => {
           if (doneCalled === false)
             await done(result as ParameterSet)
         })
       }
-      catch (e) {
-        invokation.fail(spec, method, e)
-        reject(e)
-      }
+      catch (e) { reject(e) }
     })
 
 export const validate = (instance: Madul) => {
@@ -90,11 +74,7 @@ export const wrap = async (
   params?: ParameterSet,
 ) =>
   new Promise(async (resolve, reject) => {
-    try {
-      validate(instance)
-
-      await bootstrap()
-    }
+    try { validate(instance) }
     catch (e) { return reject(e) }
     
     const deps   = instance.deps?.map((d: string) => parse(d).ref)
@@ -112,8 +92,8 @@ export const wrap = async (
       const extra = await doWrap(spec, instance, i, output)(params) as Madul
 
       for (const e of Object.keys(extra || { }))
-      // @ts-ignore
-        instance.hydrated[e] = extra[e]
+        if (instance.hydrated)
+          instance.hydrated[e] = extra[e]
     })
 
     const needsWrapping = Object.keys(instance).filter(n => {

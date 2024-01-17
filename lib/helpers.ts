@@ -1,15 +1,15 @@
 import {
-  get,
-  resetAll,
+  items,
+  uninit,
 } from "./CollectionManager"
 
 export const executeAndReset = async (
   key: string,
-  item: string,
 ) => {
-  const listener = get(key, item) as CallableFunction
+  const listeners = items<CallableFunction>(key)
 
-  if (listener) await listener()
+  if (Array.isArray(listeners))
+    for (const l of listeners) await l()
 
-  resetAll(key)
+  uninit(key)
 }

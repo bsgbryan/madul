@@ -1,198 +1,286 @@
 import {
-  afterEach,
+  beforeEach,
   describe,
   expect,
   it,
 } from "bun:test"
 
 import {
-  add,
-  get,
+  manage,
+  item,
   init,
-  reset,
-  remove,
-  getAll,
-  addAll,
-  resetAll,
+  reinit,
+  unmanage,
+  managed,
+  uninit,
 } from "../lib/CollectionManager"
 
-init('/example')
-init('/decorator')
-init('/anotherDecorator')
-
 describe('CollectionManager', () => {
-  afterEach(resetAll)
+  beforeEach(() => uninit('::DECORATOR::'))
 
   describe('init', () => {
     it('is a function', () =>
       expect(typeof init).toBe('function')
     )
 
+    it('returns true when the specified collection is successfully created', () => {
+      expect(init('::DECORATOR::')).toBeTruthy()
+    })
+
+    it('returns false when the specified collection is not successfully created', () => {
+      // Since we call init here, the ::DECORATOR:: collection will already exist
+      // in the expect() below
+      init('::DECORATOR::')
+
+      expect(init('::DECORATOR::')).toBeFalsy()
+    })
+
     it('creates an empty array of decorators for the specified madul', () => {
-      try { get('/decorator') }
-      catch (e) { expect(e.message).toEqual('/decorator has not yet had its test collection initialized') }
+      expect(managed('::DECORATOR::')).toBeUndefined()
 
-      init('/decorator')
+      init('::DECORATOR::')
 
-      const decoratrors = get('/decorator')
+      const decoratrors = managed('::DECORATOR::')
 
       expect(Array.isArray(decoratrors)).toBeTruthy()
-      expect(decoratrors.length).toEqual(0)
+      expect(decoratrors?.length).toEqual(0)
     })
   })
 
-  describe('get', () => {
+  describe('reinit', () => {
     it('is a function', () =>
-      expect(typeof get).toBe('function')
+      expect(typeof reinit).toBe('function')
     )
 
-    it('returns collection for the passed key', async () => {
-      await add('/example', '/decorator')
+    describe('when the passed key exists', () => {
+      it('returns true: indicating all items in the collection were removed', () => {
+        init('::DECORATOR::')
+  
+        const collection = managed('::DECORATOR::')
+  
+        expect(collection?.length).toEqual(0)
+  
+        manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+  
+        expect(collection?.length).toEqual(1)
+  
+        expect(reinit('::DECORATOR::')).toBeTruthy()
+        expect(Array.isArray(collection)).toBeTruthy()
+        expect(collection?.length).toEqual(0)
+      })
 
-      const collection = get('/example')
-      
-      expect(Array.isArray(collection)).toBeTruthy()
-      expect(collection[0].key).toEqual('/decorator')
-      expect(typeof collection[0].instance.before).toBe('function')
-      expect(collection[0].instance.after).toBeUndefined()
+      it('resets the collection for the specified key to an empty array', () => {
+        init('::DECORATOR::')
+  
+        const collection = managed('::DECORATOR::')
+  
+        expect(collection?.length).toEqual(0)
+  
+        manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+  
+        expect(collection?.length).toEqual(1)
+  
+        reinit('::DECORATOR::')
+  
+        expect(Array.isArray(collection)).toBeTruthy()
+        expect(collection?.length).toEqual(0)
+      })
     })
 
-    it('throws an error when the collection for the specified key does not exist', () => {
-      try { get('/nonexistant') }
-      catch (e) { expect(e.message).toEqual('/nonexistant has not yet had its test collection initialized') }
+    describe('when the passed key does not exist', () => {
+      it('returns false', () => {
+        expect(reinit('::BAD::')).toBeFalsy()
+      })
     })
   })
 
-  describe('getAll', () => {
-    it('is a function', () =>
-      expect(typeof getAll).toBe('function')
-    )
+  describe('uninit', () => {
+    describe('when the specified collection exists', () => {
+      it('returns true: indicating the collection was deleted', () => {
+        init('::DECORATOR::')
 
-    it('returns all collections as an object', async () => {
-      await add('/example', '/decorator')
+        expect(uninit('::DECORATOR::')).toBeTruthy()
+      })
 
-      const allCollections = getAll()
+      it('is deleted', () => {
+        init('::DECORATOR::')
 
-      // This is 3 because we make 3 init() calls before executing the tests
-      expect(Object.keys(allCollections).length).toEqual(3)
-      expect(Array.isArray(allCollections['/example'])).toBeTruthy()
-      expect(Array.isArray(allCollections['/decorator'])).toBeTruthy()
-      expect(allCollections['/example'].length).toEqual(1)
-      expect(allCollections['/decorator'].length).toEqual(0)
+        uninit('::DECORATOR::')
+
+        expect(managed('::DECORATOR::')).toBeUndefined()
+      })
+    })
+
+    describe('when the specified collection does not exist', () => {
+      it('returns false', () => {
+        expect(uninit('::BADD::')).toBeFalsy()
+      })
     })
   })
 
-  describe('add', () => {
+  describe('manage', () => {
     it('is a function', () =>
-      expect(typeof add).toBe('function')
+      expect(typeof manage).toBe('function')
     )
 
-    it('adds the specified item to the collection for the specified key', async () => {
-      const collection = get('/example')
-
-      expect(Array.isArray(collection)).toBeTruthy()
-      expect(collection.length).toEqual(0)
-
-      await add('/example', '/decorator')
-      
-      expect(Array.isArray(collection)).toBeTruthy()
-      expect(collection.length).toEqual(1)
-      expect(collection[0].key).toEqual('/decorator')
-      expect(typeof collection[0].instance.before).toBe('function')
-      expect(collection[0].instance.after).toBeUndefined()
+    describe('when item is not an array', () => {
+      describe('when the specified item already exists in the collection', () => {
+        it('return false: indicating the item was not added', async () => {
+          init('::DECORATOR::')
+    
+          manage<string>('::DECORATOR::', { key: 'bar', value: 'bar' })
+    
+          expect(manage<string>('::DECORATOR::', { key: 'bar', value: 'bar' })).toBeFalsy()
+        })
+      })
+  
+      describe('when the specified item does not exist in the collection', () => {
+        it('return true: indicating the item was added', async () => {
+          init('::DECORATOR::')
+    
+          expect(manage<string>('::DECORATOR::', { key: 'bar', value: 'bar' })).toBeTruthy()
+        })
+      })
+  
+      it('adds the specified item to the collection for the specified key', () => {
+        init('::DECORATOR::')
+  
+        const collection = managed('::DECORATOR::')
+  
+        expect(Array.isArray(collection)).toBeTruthy()
+        expect(collection?.length).toEqual(0)
+  
+        manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+        
+        expect(Array.isArray(collection)).toBeTruthy()
+        expect(collection?.length).toEqual(1)
+  
+        if (collection) {
+          expect(collection[0].key).toEqual('foo')
+          expect(typeof collection[0].value).toBe('string')
+          expect(collection[0].value).toEqual('foo')
+        }
+      })
     })
 
-    it('throws an error when the specified key already exists for the specified collection', async () => {
-      await add('/example', '/decorator')
+    describe('when item is an array', () => {
+      describe('when none of the items in the passed array already exists in the collection', () => {
+        it('returns true: indicating all items were added', () => {
+          init('::DECORATOR::')
 
-      try { await add('/example', '/decorator') }
-      catch (e) {
-        expect(e.message).toEqual('/decorator is already a test for /example')
+          const items = [
+            { key: 'bar',  value: 'bar'  },
+            { key: 'baz',  value: 'baz'  },
+            { key: 'bang', value: 'bang' },
+            { key: 'boom', value: 'boom' },
+          ]
+
+          expect(manage<string>('::DECORATOR::', items)).toBeTruthy()
+          expect(managed('::DECORATOR::')?.length).toEqual(4)
+        })
+      })
+
+      describe('when any of the items in the passed array already exists in the collection', () => {
+        it('returns true: indicating no items were added', () => {
+          init('::DECORATOR::')
+
+          manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+          expect(managed('::DECORATOR::')?.length).toEqual(1)
+
+          const items = [
+            { key: 'foo',  value: 'foo'  },
+            { key: 'baz',  value: 'baz'  },
+            { key: 'bang', value: 'bang' },
+            { key: 'boom', value: 'boom' },
+          ]
+
+          expect(manage('::DECORATOR::', items)).toBeFalsy()
+          expect(managed('::DECORATOR::')?.length).toEqual(1)
+        })
+      })
+    })
+  })
+
+  describe('unmanage', () => {
+    it('is a function', () =>
+      expect(typeof unmanage).toBe('function')
+    )
+
+    describe('when the specified item exists in the specified collection', () => {
+      it('returns true: indicating the specified item was removed from the collection', () => {
+        manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+  
+        expect(unmanage('::DECORATOR::', 'foo')).toBeTruthy()
+      })
+
+      it('removes the specified item from the specified collection', () => {
+        manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+        manage<string>('::DECORATOR::', { key: 'bar', value: 'bar' })
+  
+        const decorators = managed('::DECORATOR::')
+  
+        expect(decorators?.length).toEqual(2)
+  
+        if (decorators) {
+          expect(decorators[0].key).toEqual('foo')
+          expect(decorators[0].value).toEqual('foo')
+        }
+  
+        unmanage('::DECORATOR::', 'foo')
+  
+        expect(decorators?.length).toEqual(1)
+  
+        if (decorators) {
+          expect(decorators[0].key).toEqual('bar')
+          expect(decorators[0].value).toEqual('bar')
+        }
+      })
+    })
+
+    describe('when the specified item does not exist in the specified collection', () => {
+      it('returns false', () => {
+        manage<string>('::DECORATOR::', { key: 'bar', value: 'bar' })
+
+        expect(unmanage('::DECORATOR::', 'foo')).toBeFalsy()
+      })
+    })
+  })
+
+  describe('managed', () => {
+    it('is a function', () => expect(typeof managed).toBe('function'))
+
+    it('returns the specified managed collection', () => {
+      init('::DECORATOR::')
+
+      manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+
+      const collection = managed<string>('::DECORATOR::')
+
+      expect(collection?.length).toEqual(1)
+
+      if (collection) {
+        expect(typeof collection[0]).toEqual('object')
+        expect(typeof collection[0].key).toEqual('string')
+        expect(typeof collection[0].value).toEqual('string')
+        expect(collection[0].key).toEqual('foo')
+        expect(collection[0].value).toEqual('foo')
       }
     })
   })
 
-  describe('addAll', () => {
-    it('is a function', () =>
-      expect(typeof addAll).toBe('function')
-    )
+  describe('item', () => {
+    it('is a function', () => expect(typeof item).toBe('function'))
 
-    it('adds all specified items to the specified collection', async () => {
-      await addAll('/example', ['/decorator', '/anotherDecorator'])
+    it('returns collection for the passed key', () => {
+      init('::DECORATOR::')
 
-      const collection = get('/example')
+      manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
 
-      expect(Array.isArray(collection)).toBeTruthy()
-      expect(collection.length).toEqual(2)
-      expect(collection[0].key).toEqual('/decorator')
-      expect(collection[1].key).toEqual('/anotherDecorator')
-    })
-  })
-
-  describe('reset', () => {
-    it('is a function', () =>
-      expect(typeof reset).toBe('function')
-    )
-
-    it('resets the collection for the specified key to an empty array', async () => {
-      const collection = get('/example')
-
-      expect(collection.length).toEqual(0)
-
-      await add('/example', '/decorator')
-
-      expect(collection.length).toEqual(1)
-
-      reset('/example')
-
-      expect(Array.isArray(collection)).toBeTruthy()
-      expect(collection.length).toEqual(0)
-    })
-  })
-
-  describe('resetAll', () => {
-    it('is a function', () =>
-      expect(typeof resetAll).toBe('function')
-    )
-
-    it('resets all for all keys to empty arrays', async () => {
-      await add('/example',   '/decorator')
-      await add('/decorator', '/anotherDecorator')
-
-      const exampleCollection   = get('/example')
-      const decoratorCollection = get('/decorator')
-
-      expect(exampleCollection.length).toEqual(1)
-      expect(decoratorCollection.length).toEqual(1)
-
-      resetAll()
-
-      expect(exampleCollection.length).toEqual(0)
-      expect(decoratorCollection.length).toEqual(0)
-    })
-  })
-
-  describe('remove', () => {
-    it('is a function', () =>
-      expect(typeof remove).toBe('function')
-    )
-
-    it("removes the specified item from the specified collection", async () => {
-      await add('/example', '/decorator')
-      await add('/example', '/anotherDecorator')
-
-      const decorators = get('/example')
-
-      expect(decorators.length).toEqual(2)
-
-      remove('/example', '/decorator')
-
-      expect(decorators.length).toEqual(1)
+      expect(typeof item<string>('::DECORATOR::', 'foo')).toEqual('string')
     })
 
-    it('throws an error when the collection for the specified key does not exist', () => {
-      try { remove('/decorator', '/anotherDecorator') }
-      catch (e) { expect(e.message).toEqual('/decorator has not yet had its test collection initialized') }
+    it('returns undefined when the collection for the specified key does not exist', () => {
+      expect(item<string>('::DECORATOR::', 'non-existant')).toBeUndefined()
     })
   })
 })

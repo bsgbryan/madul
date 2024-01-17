@@ -1,34 +1,49 @@
 import {
-  DecoratorManagerProps,
   Dictionary,
   Madul,
+  ParameterSet,
 } from "./types"
 
-import { managed } from "./CollectionManager"
+import {
+  manage,
+  managed,
+  unmanage,
+} from "./CollectionManager"
 
-const DecoratorManager = async ({
-  spec,
-  method,
-  mode,
-  params,
-  output,
-}: DecoratorManagerProps) => {
+export const add = (
+  spec: string,
+  decorator: Madul,
+) => {
+  manage<Madul>(`${spec}::DECORATORS`, {
+    key: decorator.name,
+    value: decorator,
+  })
+}
+
+export const remove = (
+  spec: string,
+  name: string,
+) => unmanage(`${spec}::DECORATORS`, name)
+
+const Execute = async (
+  spec:    string,
+  method:  string,
+  mode:   'before' | 'after',
+  params?: ParameterSet,
+  output?: ParameterSet,
+) => {
   const decorators = managed<Madul>(`${spec}::DECORATORS`)?.
-    map((d: Dictionary<unknown>) => d.value)?.
-    find((d: unknown) => typeof (d as Madul)[mode] === 'function')
+    map((d: Dictionary<Madul>) => d.value)?.
+    filter((d: Madul) => typeof d[mode] === 'function')
 
   if (decorators) {
-    const args = { madul: spec, method }
+    const args: ParameterSet = { spec, method }
 
-    if (mode === 'before')
-      // @ts-ignore
-      args.params = params
-    else if (mode === 'after')
-      // @ts-ignore
-      args.output = output
+    if (mode === 'before') args.params = params
+    if (mode === 'after' ) args.output = output
 
-    await (decorators as Madul)[mode](args)
+    for (const d of decorators) await d[mode](args)
   }
 }
 
-export default DecoratorManager
+export default Execute
