@@ -1,13 +1,10 @@
 import { each } from "async"
 
-import Bootstrap from "./Bootstrapper"
-
-import { parse } from "./DependencySpec"
-
 import { MadulDictionary } from "./types"
 
-const hydrate = async (
+const DependencyHydrator = async (
   deps: Array<string>,
+  bootstrap: CallableFunction,
   params = {},
   root = process.cwd(),
 ): Promise<MadulDictionary> => {
@@ -15,20 +12,7 @@ const hydrate = async (
     const output: MadulDictionary = { }
 
     await each(deps, async d => {
-      const { ref, functions } = parse(d)
-
-      try {
-        const initialized = await Bootstrap(d, params, { root })
-
-        if (functions.length > 0)
-          functions.forEach((f: string) => {
-            const { ref, handle } = parse(f)
-
-            output[ref] = initialized[handle]
-          })
-        else
-          output[ref] = initialized
-      }
+      try { output[d] = await bootstrap(d, params, { root }) }
       catch (e) { reject(e) }
     })
 
@@ -36,4 +20,4 @@ const hydrate = async (
   })
 }
 
-export default hydrate
+export default DependencyHydrator

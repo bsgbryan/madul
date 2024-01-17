@@ -1,87 +1,92 @@
-import { Config, Madul, MadulDictionary } from "../types"
-
-import { log } from "../../sdk/Events"
-
-import { executeAndReset } from "../helpers"
-
-import { processAllBundles } from "../BundleProcessor"
+import {
+  Config,
+  Madul,
+  MadulDictionary,
+  ParameterSet,
+} from "@/types"
 
 import {
-  add,
-  init,
-} from "../CollectionManager"
+  manage as add,
+  items,
+  uninit,
+} from "@/CollectionManager"
 
-import {
-  SCOPE,
-  parse,
-} from "../DependencySpec"
-
-import load from "../Loader"
-
-import prepare from "./prepare"
+import DependencyHydrator from "@/DependencyHydrator"
 
 const available: MadulDictionary = { }
 
-const defaultConfig: Config = {
-  sdk:  undefined,
-  root: process.cwd(),
-}
-
 const Bootstrap = async (
-  spec: string,
-  params = {},
-  config = defaultConfig,
+  spec:                               string,
+  params = {                     } as ParameterSet,
+  config = { root: process.cwd() } as Config,
 ): Promise<Madul> =>
   new Promise(async (resolve, reject) => {
-    const { ref, scope } = parse(spec)
+    const listeners = `${spec}::LISTENERS`,
+          cb        = () => resolve(available[spec] as Madul),
+          item      = { key: null, value: cb }
 
-    const cb = () => resolve(available[ref] as Madul)
-      
-    log('madul.requested', { spec })
-
-    switch (available[ref]) {
+    switch (available[spec]) {
       case undefined:
-        log('madul.bootstrap', { spec })
-      
-        available[ref] = null
+        available[spec] = null
 
-        init(`${ref}::LISTENERS`)
-        add(`${ref}::LISTENERS`, cb)
+        add(listeners, item)
 
-        await processAllBundles(spec)
+        try {
+          const paths = (await Bun.file(`${config.root}/tsconfig.json`).json())?.
+            compilerOptions?.
+            paths
 
-        let loaded
+          if (paths) {
+            const prefix = Object.keys(paths).find(
+              p => p.substring(0, p.length - 2) === spec.split('/')[0]
+            )
 
-        try { loaded = await load(spec, config) }
-        // @ts-ignore
-        catch (e) { return reject(`Error loading ${spec}: ${e.message}`) }
+            if (prefix) {
+              const path = paths[prefix][0].
+                replace('*', spec.substring(2)).
+                replace('.', process.cwd())
 
-        switch(scope) {
-          case SCOPE.DEFAULT:
-            available[ref] = loaded
+              const mod    = await import(path),
+                    output = { name: spec } as Madul
 
-            return executeAndReset(`${ref}::LISTENERS`, cb.name)
-          case SCOPE.INTERNAL:
-            available[ref] = loaded
+              if (typeof mod.dependancies === 'function') {
+                const deps     = mod.dependancies(),
+                      hydrated = await DependencyHydrator(
+                        Object.keys(deps),
+                        Bootstrap,
+                        params,
+                        config.root,
+                      )
 
-            return executeAndReset(ref, cb.name)
-          default:
-            try {
-              prepare(spec, params, loaded, config.root, (ready: Madul) => {
-                available[ref] = ready
+                for (const dep of Object.keys(deps))
+                  for (const d of deps[dep])
+                    // @ts-ignore
+                    output[d] = hydrated[dep][d]
+              }
 
-                executeAndReset(`${ref}::LISTENERS`, cb.name)
-              })
+              for (const prop of Object.keys(mod))
+                output[prop] = mod[prop]
+
+              available[spec] = output
+              
+              const callbacks = items<CallableFunction>(listeners)
+
+              if (Array.isArray(callbacks))
+                for (const done of callbacks) await done()
+
+              uninit(listeners)
             }
-            catch (e) { reject(e) }
+          }
+          else reject(new Error("No compilerOptions.paths defined in tsconfig.json"))
         }
+        catch (e) { return reject(`Error loading ${spec}: ${e}`) }
 
         break
       case null:
-        add(`${ref}::LISTENERS`, cb)
+        add(listeners, item)
+
         break
-      default:
-        cb()
+      default: cb()
     }
   })
 

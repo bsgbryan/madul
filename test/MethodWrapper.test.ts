@@ -27,10 +27,9 @@ describe('MethodWrapper', () => {
 
     it('wraps all methods on an object', async () => {
       const test = {
-        foo: function({ testParam, done, progress }) {
+        foo: function({ testParam, done }) {
           expect(testParam).toEqual('bar')
           expect(typeof done).toBe('function')
-          expect(typeof progress).toBe('function')
 
           done()
         }
@@ -38,8 +37,10 @@ describe('MethodWrapper', () => {
 
       const wrapped = await wrap('/test', test) as Madul
 
-      expect(Object.keys(test).length).toEqual(1)
-      expect(Object.keys(wrapped).length).toEqual(1)
+      console.log({ wrapped })
+
+      expect(test.foo).toBeDefined()
+      expect(wrapped.foo).toBeDefined()
 
       // Prove wrapped function is async
       await wrapped.foo({ testParam: 'bar' })

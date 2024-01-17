@@ -1,7 +1,7 @@
 import { Madul, ParameterSet } from "../types"
 
 import { wrap    } from "../MethodWrapper"
-import   hydrate   from "../DependencyHydrator"
+import   DependencyHydrator   from "../DependencyHydrator"
 
 const prepare = async (
   spec: string,
@@ -12,7 +12,7 @@ const prepare = async (
 ) => {
   const hydrated =
     madul.hasOwnProperty('deps') ?
-      await hydrate(madul.deps || [], params, root)
+      await DependencyHydrator(madul.deps || [], params, root)
       :
       { }
 
