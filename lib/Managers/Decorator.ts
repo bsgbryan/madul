@@ -1,14 +1,15 @@
 import {
-  Dictionary,
   Madul,
   ParameterSet,
-} from "./types"
+} from "@/types"
 
 import {
   manage,
   managed,
   unmanage,
-} from "./CollectionManager"
+} from "./Collection"
+
+import { Dictionary } from "@/Managers/types"
 
 export const add = (
   spec: string,
@@ -30,7 +31,6 @@ const Execute = async (
   method:  string,
   mode:   'before' | 'after',
   params?: ParameterSet,
-  output?: ParameterSet,
 ) => {
   const decorators = managed<Madul>(`${spec}::DECORATORS`)?.
     map((d: Dictionary<Madul>) => d.value)?.
@@ -39,8 +39,8 @@ const Execute = async (
   if (decorators) {
     const args: ParameterSet = { spec, method }
 
-    if (mode === 'before') args.params = params
-    if (mode === 'after' ) args.output = output
+    if (mode === 'before') args.input  = params
+    if (mode === 'after' ) args.output = params
 
     for (const d of decorators) await d[mode](args)
   }

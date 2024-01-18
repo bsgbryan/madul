@@ -3,11 +3,12 @@ export const dependancies = () => ({
 })
 
 type OHAIParams = {
+  boom: CallableFunction
   person: string
 }
 
-export const ohai = ({ person }: OHAIParams) => {
-  console.log(`OHAI, ${person}!`)
+export const ohai = ({ person, boom }: OHAIParams) => {
+  return `OHAI, ${person}! ... ${boom()}`
 }
 
 export const asink = async () => Promise.resolve()

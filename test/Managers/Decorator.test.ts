@@ -8,16 +8,16 @@ import {
   init,
   manage,
   managed,
-} from "../lib/CollectionManager"
+} from "@/Managers/Collection"
 
 import {
   Madul,
   ParameterSet,
-} from "../lib/types"
+} from "@/types"
 
 import Execute, {
   add, remove,
-} from "../lib/DecoratorManager"
+} from "@/Managers/Decorator"
 
 describe('DecoratorManager', () => {
   describe('add', () => {
@@ -71,11 +71,12 @@ describe('DecoratorManager', () => {
       manage<Madul>('/test::DECORATORS', {
         key: "doesn't matter",
         value: {
+          name: 'Test',
           before: (params: ParameterSet) => {
             args = params
             ran  = true
           }
-        }
+        } as Madul
       })
 
       await Execute('/test', 'test', 'before')
