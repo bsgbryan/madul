@@ -7,7 +7,7 @@ import {
   manage,
   managed,
   unmanage,
-} from "./Collection"
+} from "@/Managers/Collection"
 
 import { Dictionary } from "@/Managers/types"
 

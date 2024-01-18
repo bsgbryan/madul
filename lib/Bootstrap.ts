@@ -1,7 +1,5 @@
 import path from "node:path"
 
-import { each } from "async"
-
 import {
   FunctionObjectLiteral,
   Madul,
@@ -109,10 +107,10 @@ const Bootstrap = async (
             const deps     = mod.dependancies(),
                   hydrated = { } as MadulDictionary
 
-            await each(Object.keys(deps), async d => {
+            for (const d of Object.keys(deps)) {
               try { hydrated[d] = await Bootstrap(d, params, root) }
-              catch (e) { reject(e) }
-            })
+              catch (e) { return reject(e) }
+            }
 
             for (const dep of Object.keys(deps))
               for (const d of deps[dep])
