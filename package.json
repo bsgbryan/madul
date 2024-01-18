@@ -3,22 +3,14 @@
   "version": "1.5.0",
   "description": "A simple tool that makes writing async code fun & easy",
   "exports": {
-    ".": "./lib/index.js",
-    "./bootstrap": "./lib/Bootstrapper/index.js",
-    "./dep": "./lib/DependencySpec/index.js",
-    "./events": "./sdk/Events.js",
-    "./iterable": "./sdk/Iterable.js",
-    "./decorators": "./lib/DecoratorManager.js",
-    "./testable": "./lib/Testable.js"
+    ".": "./lib/Bootstrap.ts"
   },
-  "files": [
-    "lib",
-    "sdk"
-  ],
+  "files": ["lib"],
   "keywords": [
     "async",
     "module",
-    "class"
+    "funtional",
+    "library"
   ],
   "author": "Bryan Maynard <bsgbryan@gmail.com> (https://bsgbryan.com)",
   "repository": {
@@ -29,20 +21,10 @@
     "url": "https://github.com/bsgbryan/madul/issues"
   },
   "license": "MIT",
-  "dependencies": {
-    "async": "3.2.5",
-    "eventemitter3": "5.0.1",
-    "systeminformation": "5.21.22"
-  },
   "homepage": "https://github.com/bsgbryan/madul#readme",
-  "directories": {
-    "lib": "lib",
-    "test": "test"
-  },
   "devDependencies": {
     "@tsconfig/bun": "^1.0.1",
     "@tsconfig/node-lts": "^20.1.1",
-    "@types/async": "^3.2.24",
     "bun-types": "^1.0.21",
     "typescript": "5.3.3"
   }
