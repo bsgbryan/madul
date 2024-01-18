@@ -13,7 +13,7 @@ import {
   unmanage,
   managed,
   uninit,
-} from "../lib/CollectionManager"
+} from "@/Managers/Collection"
 
 describe('CollectionManager', () => {
   beforeEach(() => uninit('::DECORATOR::'))
