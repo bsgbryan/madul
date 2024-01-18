@@ -32,7 +32,6 @@ export const getMessagesFrom = async ({
 1. The `db` dependency is loaded asynchronously
 1. Dependencies are passed as named parameters to methods
 1. The `$init` method is guaranteed to be executed after all dependencies have been loaded, but before the madul is available for use; so you know that the `db` will be properly setup and connected to as `username`
-1. `sdk` is a collection of helpful functions. The [iterable sdk](https://github.com/bsgbryan/madul/blob/master/sdk/Iterable.js) wraps the [async](https://www.npmjs.com/package/async) library. `sdk` is easily configurable/customizable per madul.
 
 ### Madul Usage `GetMessagesFromAda.ts`
 
