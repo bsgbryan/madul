@@ -13,10 +13,12 @@ import {
   unmanage,
   managed,
   uninit,
-} from "@/Managers/Collection"
+} from "#Managed/Collection"
 
 describe('CollectionManager', () => {
-  beforeEach(() => uninit('::DECORATOR::'))
+  const cool = '😎 TEST 😎'
+
+  beforeEach(() => uninit(cool))
 
   describe('init', () => {
     it('is a function', () =>
@@ -24,23 +26,23 @@ describe('CollectionManager', () => {
     )
 
     it('returns true when the specified collection is successfully created', () => {
-      expect(init('::DECORATOR::')).toBeTruthy()
+      expect(init(cool)).toBeTruthy()
     })
 
     it('returns false when the specified collection is not successfully created', () => {
-      // Since we call init here, the ::DECORATOR:: collection will already exist
+      // Since we call init here, the'😎TEST😎 collection will already exist
       // in the expect() below
-      init('::DECORATOR::')
+      init(cool)
 
-      expect(init('::DECORATOR::')).toBeFalsy()
+      expect(init(cool)).toBeFalsy()
     })
 
     it('creates an empty array of decorators for the specified madul', () => {
-      expect(managed('::DECORATOR::')).toBeUndefined()
+      expect(managed(cool)).toBeUndefined()
 
-      init('::DECORATOR::')
+      init(cool)
 
-      const decoratrors = managed('::DECORATOR::')
+      const decoratrors = managed(cool)
 
       expect(Array.isArray(decoratrors)).toBeTruthy()
       expect(decoratrors?.length).toEqual(0)
@@ -54,33 +56,33 @@ describe('CollectionManager', () => {
 
     describe('when the passed key exists', () => {
       it('returns true: indicating all items in the collection were removed', () => {
-        init('::DECORATOR::')
+        init(cool)
   
-        const collection = managed('::DECORATOR::')
+        const collection = managed(cool)
   
         expect(collection?.length).toEqual(0)
   
-        manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+        manage<string>(cool, { key: 'foo', value: 'foo' })
   
         expect(collection?.length).toEqual(1)
   
-        expect(reinit('::DECORATOR::')).toBeTruthy()
+        expect(reinit(cool)).toBeTruthy()
         expect(Array.isArray(collection)).toBeTruthy()
         expect(collection?.length).toEqual(0)
       })
 
       it('resets the collection for the specified key to an empty array', () => {
-        init('::DECORATOR::')
+        init(cool)
   
-        const collection = managed('::DECORATOR::')
+        const collection = managed(cool)
   
         expect(collection?.length).toEqual(0)
   
-        manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+        manage<string>(cool, { key: 'foo', value: 'foo' })
   
         expect(collection?.length).toEqual(1)
   
-        reinit('::DECORATOR::')
+        reinit(cool)
   
         expect(Array.isArray(collection)).toBeTruthy()
         expect(collection?.length).toEqual(0)
@@ -97,17 +99,17 @@ describe('CollectionManager', () => {
   describe('uninit', () => {
     describe('when the specified collection exists', () => {
       it('returns true: indicating the collection was deleted', () => {
-        init('::DECORATOR::')
+        init(cool)
 
-        expect(uninit('::DECORATOR::')).toBeTruthy()
+        expect(uninit(cool)).toBeTruthy()
       })
 
       it('is deleted', () => {
-        init('::DECORATOR::')
+        init(cool)
 
-        uninit('::DECORATOR::')
+        uninit(cool)
 
-        expect(managed('::DECORATOR::')).toBeUndefined()
+        expect(managed(cool)).toBeUndefined()
       })
     })
 
@@ -126,31 +128,31 @@ describe('CollectionManager', () => {
     describe('when item is not an array', () => {
       describe('when the specified item already exists in the collection', () => {
         it('return false: indicating the item was not added', async () => {
-          init('::DECORATOR::')
+          init(cool)
     
-          manage<string>('::DECORATOR::', { key: 'bar', value: 'bar' })
+          manage<string>(cool, { key: 'bar', value: 'bar' })
     
-          expect(manage<string>('::DECORATOR::', { key: 'bar', value: 'bar' })).toBeFalsy()
+          expect(manage<string>(cool, { key: 'bar', value: 'bar' })).toBeFalsy()
         })
       })
   
       describe('when the specified item does not exist in the collection', () => {
         it('return true: indicating the item was added', async () => {
-          init('::DECORATOR::')
+          init(cool)
     
-          expect(manage<string>('::DECORATOR::', { key: 'bar', value: 'bar' })).toBeTruthy()
+          expect(manage<string>(cool, { key: 'bar', value: 'bar' })).toBeTruthy()
         })
       })
   
       it('adds the specified item to the collection for the specified key', () => {
-        init('::DECORATOR::')
+        init(cool)
   
-        const collection = managed('::DECORATOR::')
+        const collection = managed(cool)
   
         expect(Array.isArray(collection)).toBeTruthy()
         expect(collection?.length).toEqual(0)
   
-        manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+        manage<string>(cool, { key: 'foo', value: 'foo' })
         
         expect(Array.isArray(collection)).toBeTruthy()
         expect(collection?.length).toEqual(1)
@@ -166,7 +168,7 @@ describe('CollectionManager', () => {
     describe('when item is an array', () => {
       describe('when none of the items in the passed array already exists in the collection', () => {
         it('returns true: indicating all items were added', () => {
-          init('::DECORATOR::')
+          init(cool)
 
           const items = [
             { key: 'bar',  value: 'bar'  },
@@ -175,17 +177,17 @@ describe('CollectionManager', () => {
             { key: 'boom', value: 'boom' },
           ]
 
-          expect(manage<string>('::DECORATOR::', items)).toBeTruthy()
-          expect(managed('::DECORATOR::')?.length).toEqual(4)
+          expect(manage<string>(cool, items)).toBeTruthy()
+          expect(managed(cool)?.length).toEqual(4)
         })
       })
 
       describe('when any of the items in the passed array already exists in the collection', () => {
         it('returns true: indicating no items were added', () => {
-          init('::DECORATOR::')
+          init(cool)
 
-          manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
-          expect(managed('::DECORATOR::')?.length).toEqual(1)
+          manage<string>(cool, { key: 'foo', value: 'foo' })
+          expect(managed(cool)?.length).toEqual(1)
 
           const items = [
             { key: 'foo',  value: 'foo'  },
@@ -194,8 +196,8 @@ describe('CollectionManager', () => {
             { key: 'boom', value: 'boom' },
           ]
 
-          expect(manage('::DECORATOR::', items)).toBeFalsy()
-          expect(managed('::DECORATOR::')?.length).toEqual(1)
+          expect(manage(cool, items)).toBeFalsy()
+          expect(managed(cool)?.length).toEqual(1)
         })
       })
     })
@@ -208,16 +210,16 @@ describe('CollectionManager', () => {
 
     describe('when the specified item exists in the specified collection', () => {
       it('returns true: indicating the specified item was removed from the collection', () => {
-        manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+        manage<string>(cool, { key: 'foo', value: 'foo' })
   
-        expect(unmanage('::DECORATOR::', 'foo')).toBeTruthy()
+        expect(unmanage(cool, 'foo')).toBeTruthy()
       })
 
       it('removes the specified item from the specified collection', () => {
-        manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
-        manage<string>('::DECORATOR::', { key: 'bar', value: 'bar' })
+        manage<string>(cool, { key: 'foo', value: 'foo' })
+        manage<string>(cool, { key: 'bar', value: 'bar' })
   
-        const decorators = managed('::DECORATOR::')
+        const decorators = managed(cool)
   
         expect(decorators?.length).toEqual(2)
   
@@ -226,7 +228,7 @@ describe('CollectionManager', () => {
           expect(decorators[0].value).toEqual('foo')
         }
   
-        unmanage('::DECORATOR::', 'foo')
+        unmanage(cool, 'foo')
   
         expect(decorators?.length).toEqual(1)
   
@@ -239,9 +241,9 @@ describe('CollectionManager', () => {
 
     describe('when the specified item does not exist in the specified collection', () => {
       it('returns false', () => {
-        manage<string>('::DECORATOR::', { key: 'bar', value: 'bar' })
+        manage<string>(cool, { key: 'bar', value: 'bar' })
 
-        expect(unmanage('::DECORATOR::', 'foo')).toBeFalsy()
+        expect(unmanage(cool, 'foo')).toBeFalsy()
       })
     })
   })
@@ -250,11 +252,11 @@ describe('CollectionManager', () => {
     it('is a function', () => expect(typeof managed).toBe('function'))
 
     it('returns the specified managed collection', () => {
-      init('::DECORATOR::')
+      init(cool)
 
-      manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+      manage<string>(cool, { key: 'foo', value: 'foo' })
 
-      const collection = managed<string>('::DECORATOR::')
+      const collection = managed<string>(cool)
 
       expect(collection?.length).toEqual(1)
 
@@ -272,15 +274,15 @@ describe('CollectionManager', () => {
     it('is a function', () => expect(typeof item).toBe('function'))
 
     it('returns collection for the passed key', () => {
-      init('::DECORATOR::')
+      init(cool)
 
-      manage<string>('::DECORATOR::', { key: 'foo', value: 'foo' })
+      manage<string>(cool, { key: 'foo', value: 'foo' })
 
-      expect(typeof item<string>('::DECORATOR::', 'foo')).toEqual('string')
+      expect(typeof item<string>(cool, 'foo')).toEqual('string')
     })
 
     it('returns undefined when the collection for the specified key does not exist', () => {
-      expect(item<string>('::DECORATOR::', 'non-existant')).toBeUndefined()
+      expect(item<string>(cool, 'non-existant')).toBeUndefined()
     })
   })
 })

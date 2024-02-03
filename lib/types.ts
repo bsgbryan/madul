@@ -3,9 +3,12 @@ export type MadulDictionary = {
 }
 
 export type Madul = {
-  deps?:     Array<string>
-  hydrated?: MadulDictionary
-  [property: string]: any
+  [fun: string]: CallableFunction
+}
+
+export type MadulSpec = {
+  dependencies?: CallableFunction
+  decorators?:   CallableFunction
 }
 
 export type ParameterSet = {
@@ -14,4 +17,21 @@ export type ParameterSet = {
 
 export type FunctionObjectLiteral = {
   [key: string]: CallableFunction
+}
+
+export enum Mode {
+  after  = 'after',
+  before = 'before',
+}
+
+export type DependencyDictionary = {
+  [madul: string]: Array<string>
+}
+
+export type DecoratorDictionary = {
+  [fun: string]: {
+    [mode in Mode]: {
+      [mad: string]: Array<string>
+    }
+  }
 }
