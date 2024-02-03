@@ -1,5 +1,5 @@
-export const dependancies = () => ({
-  '+/Bar': ['boom']
+export const dependencies = () => ({
+  '+Bar': ['boom']
 })
 
 type OHAIParams = {

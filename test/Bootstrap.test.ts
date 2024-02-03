@@ -4,29 +4,27 @@ import {
   it,
 } from "bun:test"
 
-import Bootstrap, { Path } from "@/Bootstrap"
+import Bootstrap, { Path } from "#Bootstrap"
 
-describe('path', () => {
+describe('Path', () => {
+  it('is a function', () => expect(typeof Path).toBe('function'))
+
   it('builds a path from the spec and compilerOptions.paths', async () => {
-    const result = await Path('+/Foo')
+    const result = await Path('+Foo')
 
     expect(result).toEqual(`${process.cwd()}/scratch/Foo`)
   })
 })
 
-describe('Bootstrapper', () => {
-  describe('Bootstrap', () => {
-    it('is a function', () =>
-      expect(typeof Bootstrap).toBe('function')
-    )
+describe('Bootstrap', () => {
+  it('is a function', () => expect(typeof Bootstrap).toBe('function'))
 
-    it('bootstraps stuff', async () => {
-      const foo = await Bootstrap('+/Foo')
+  it('bootstraps stuff', async () => {
+    const foo = await Bootstrap('+Foo')
 
-      expect(foo).toBeDefined()
-      expect(foo.boom).toBeDefined()
+    expect(foo).toBeDefined()
+    expect(foo.boom).toBeDefined()
 
-      expect(foo.ohai({ person: 'Bob' })).toEqual('OHAI, Bob! ... Ba Da Boom')
-    })
+    expect(foo.ohai({ person: 'Bob' })).toEqual('OHAI, Bob! ... Ba Da Boom')
   })
 })
