@@ -3,7 +3,7 @@ import madul from "#Bootstrap"
 import { AsyncInput } from "#types"
 
 export const dependencies = () => ({
-  'node:os': ['tmpdir']
+  'node:os!': ['tmpdir']
 })
 
 export const env = async () => {
