@@ -54,7 +54,7 @@ export const emitSIGABRT = () => {
       mapped[m] = k.substring(0, k.length - 1);
     }
 
-  const heading = `🚨 ${colours.bg.red}${colours.fg.black}${colours.bright} Message: ${colours.reset} ${colours.fg.red}${_err!.message}${colours.reset}\n`,
+  const heading = `🚨 ${colours.bg.red}${colours.fg.white}${colours.bright} Message: ${colours.reset} ${colours.fg.red}${_err!.message}${colours.reset}\n`,
       { stack } = _err!,
         details = stack!.
           split(/\s+at\s+/).
@@ -76,9 +76,9 @@ export const emitSIGABRT = () => {
             }      
           }).
           map((s: { fun: string, madul: string, line: string }) => {
-            let output =  `   ${colours.fg.black}${colours.bg.red}${colours.bright}   Mädūl: ${colours.reset} ${colours.fg.cyan}${colours.bright}${s.madul}${colours.reset}\n`
-                output += `   ${colours.fg.black}${colours.bg.red}${colours.bright}     fun: ${colours.reset} ${colours.fg.white}${colours.bright}${s.fun}${colours.reset}\n`
-                output += `   ${colours.fg.black}${colours.bg.red}${colours.bright}    line: ${colours.reset} ${colours.fg.yellow}${colours.bright}${s.line}${colours.reset}\n`
+            let output =  `   ${colours.fg.white}${colours.bg.red}${colours.bright}   Mädūl: ${colours.reset} ${colours.fg.cyan}${colours.bright}${s.madul}${colours.reset}\n`
+                output += `   ${colours.fg.white}${colours.bg.red}${colours.bright}     fun: ${colours.reset} ${colours.fg.white}${colours.bright}${s.fun}${colours.reset}\n`
+                output += `   ${colours.fg.white}${colours.bg.red}${colours.bright}    line: ${colours.reset} ${colours.fg.yellow}${colours.bright}${s.line}${colours.reset}\n`
 
             return output
           }).
