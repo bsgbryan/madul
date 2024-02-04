@@ -1,3 +1,5 @@
+import err from "#Err"
+
 export type MadulDictionary = {
   [name: string]: Madul | null
 }
@@ -38,4 +40,27 @@ export type DecoratorDictionary = {
       [mad: string]: Array<string>
     }
   }
+}
+
+export interface Input {
+  self: Madul
+}
+
+export interface Output { }
+
+export interface AsyncInput extends Input {
+  fail: WrappedFunction
+  done: WrappedFunction
+}
+
+export interface ErrDecorator extends Input {
+  err: typeof err
+}
+
+export interface AsyncBeforeDecorator extends AsyncInput {
+  input: ParameterSet
+}
+
+export interface AsyncAfterDecorator extends Output {
+  output: ParameterSet
 }

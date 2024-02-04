@@ -45,7 +45,8 @@ export const Path = async (
   spec: string,
   root = process.cwd(),
 ) => {
-  if (config === undefined) config = await Bun.file(`${root}/tsconfig.json`).json()
+  if (spec[0] === '!') return path.normalize(`${root}/${spec.substring(1)}`)
+  else if (config === undefined) config = await Bun.file(`${root}/tsconfig.json`).json()
 
   const paths = config?.compilerOptions?.paths
 
@@ -53,7 +54,8 @@ export const Path = async (
     const prefix = Object.keys(paths).find(p => p.substring(0, p.length - 1) === spec[0])
 
     if (prefix) return path.normalize(`${root}/${paths[prefix][0].replace('*', spec.substring(1))}`)
-    else throw new Error(`Could not build path for ${spec} from ${paths}`)
+    else if (spec.charCodeAt(0) > 96 && spec.charCodeAt(0) < 123) return spec
+    else throw new Error(`Could not find ${spec[0]} in compilerOptions.paths: ${JSON.stringify(paths, null, 2)}`)
   }
   else throw new Error("No compilerOptions.paths defined in tsconfig.json")
 }
@@ -74,12 +76,22 @@ export const HydrateDependencies = async (
   const deps        = dependencies() as DependencyDictionary,
         boostrapped = { } as MadulDictionary
 
-  for (const d of Object.keys(deps))
-    boostrapped[d] = await Bootstrap(d, params, root)
+  for (const d of Object.keys(deps)) {
+    if (d.endsWith('!')) {
+      const use = d.substring(0, d.length - 1)
 
-  for (const [k, v] of Object.entries(deps))
-    for (const d of v)
-      output[d] = boostrapped[k]![d]
+      boostrapped[use] = await import(use)
+    }
+    else boostrapped[d] = await Bootstrap(d, params, root)
+  }
+
+  for (const [k, v] of Object.entries(deps)) {
+    let use = k
+
+    if (k.endsWith('!')) use = k.substring(0, k.length - 1)
+
+    for (const d of v) output[d] = boostrapped[use]![d]
+  }
 }
 
 export const HydrateDecorators = async (
@@ -101,42 +113,41 @@ export const ExtractFunctions = (
 ) => {
   return new Map(Object.
     entries({ ...mod, ...output }).
-    filter(([k, v]) => typeof v === 'function' && !k.startsWith('$')).
+    filter(([k, v]) => typeof v === 'function').
     filter(([k, _]) => k !== 'dependencies' && k !== 'decorators')
   ) as Map<string, CallableFunction>
 }
 
 export const ExecuteInitializers = async (
   spec:    string,
-  mod:     MadulSpec,
-  output:  Madul,
+  mod:     Madul,
   fns:     Map<string, CallableFunction>,
   params?: ParameterSet,
 ) => {
   const asyncInits = Object.
     keys(mod).
-    filter(i => output[i]?.constructor?.name === 'AsyncFunction' && i[0] === '$')
+    filter(i => mod[i]?.constructor?.name === 'AsyncFunction' && i[0] === '$')
       
   for (const i of asyncInits) await DoWrapAsync(spec, fns, i)(params)
 
   const inits = Object.
     keys(mod).
-    filter(i => output[i]?.constructor?.name === 'Function' && i[0] === '$')
+    filter(i => mod[i]?.constructor?.name === 'Function' && i[0] === '$')
       
   for (const i of inits) await DoWrapSync(fns, i)(params)
 }
 
 export const WrapAsync = (
   spec:   string,
-  mod:    MadulSpec,
+  mod:    Madul,
   fns:    Map<string, CallableFunction>,
   output: Madul,
 ) => {
   const asyncFns = new Map(Object.
     entries(mod).
-    filter(
-      ([k, v]) => (v as CallableFunction).constructor.name === 'AsyncFunction' && !k.startsWith('$')
-    )
+    filter(([_, v]) => (v as CallableFunction).constructor.name === 'AsyncFunction').
+    filter(([k, _]) => !k.startsWith('$')).
+    filter(([k, _]) => k !== 'dependencies' && k !== 'decorators')
   ) as Map<string, CallableFunction>
 
   for (const k of asyncFns.keys()) output[k] = DoWrapAsync(spec, fns, k, output)
@@ -174,15 +185,15 @@ export const DoWrapAsync = (
 }
 
 export const WrapSync = (
-  mod:    MadulSpec,
+  mod:    Madul,
   fns:    Map<string, CallableFunction>,
   output: Madul,
 ) => {
   const syncFns = new Map(Object.
     entries(mod).
-    filter(
-      ([k, v]) => (v as WrappedFunction).constructor.name === 'Function' && !k.startsWith('$')
-    )
+    filter(([_, v]) => (v as WrappedFunction).constructor.name === 'Function').
+    filter(([k, _]) => !k.startsWith('$')).
+    filter(([k, _]) => k !== 'dependencies' && k !== 'decorators')
   ) as Map<string, WrappedFunction>
 
   for (const k of syncFns.keys()) output[k] = DoWrapSync(fns, k, output)
@@ -236,17 +247,18 @@ const Bootstrap = async (
         try {
           const from   = await Path(spec, root),
                 mod    = await import(from) as MadulSpec,
+                proxy  = { } as Madul,
                 output = { } as Madul
 
           if (typeof mod.dependencies === 'function')
-            await HydrateDependencies(mod.dependencies, output, params, root)
+            await HydrateDependencies(mod.dependencies, proxy, params, root)
 
           if (typeof mod.decorators === 'function')
             await HydrateDecorators(spec, mod.decorators, params, root)
 
-          const fns = ExtractFunctions(mod, output)
+          const fns = ExtractFunctions(mod, proxy)
 
-          await ExecuteInitializers(spec, mod, output, fns, params)
+          await ExecuteInitializers(spec, mod, fns, params)
 
           WrapAsync(spec, mod, fns, output)
           WrapSync(mod, fns, output)
@@ -260,7 +272,10 @@ const Bootstrap = async (
 
           remove(listeners)
         }
-        catch (e) { reject(`Error loading ${spec}: ${(e as unknown as Error).message}`) }
+        catch (e) {
+          const msg = (e as unknown as Error).message
+
+          reject(`Error loading ${spec}${msg ? `: ${msg}` : ''}`) }
 
         break
       case null:

@@ -6,6 +6,7 @@
   "compilerOptions": {
     "types": ["bun-types"],
     "paths": {
+      "@*": ["./batteries/*"],
       "#*": ["./lib/*"],
       "+*": ["./scratch/*"]
     }

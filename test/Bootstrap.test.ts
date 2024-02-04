@@ -76,16 +76,17 @@ describe('HydrateDecorators', () => {
 })
 
 describe('ExtractFunctions', () => {
-  it('merges the input and converts it to a map - filtering out initializer, dependencies, and decorators functions', () => {
+  it('merges the input and converts it to a map - filtering out dependencies and decorators functions', () => {
     const mod    = { foo: () => {}, dependencies: () => {}, decorators: () => {} }
     const output = { bar: ()  => {}, $init: () => {} }
 
     const mapped = ExtractFunctions(mod as MadulSpec, output)
     const iter   = mapped.keys()
 
-    expect(mapped.size).toEqual(2)
+    expect(mapped.size).toEqual(3)
     expect(iter.next().value).toEqual('foo')
     expect(iter.next().value).toEqual('bar')
+    expect(iter.next().value).toEqual('$init')
   })
 })
 
@@ -96,7 +97,6 @@ describe('Bootstrap', () => {
     const foo = await Bootstrap('+Foo')
 
     expect(foo).toBeDefined()
-    expect(foo.boom).toBeDefined()
 
     expect(foo.ohai({ person: 'Bob' })).toEqual('OHAI, Bob! ... Ba Da Boom')
   })
