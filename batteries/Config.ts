@@ -12,7 +12,7 @@ export const env = async () => {
   return {
     current: process.env.NODE_ENV,
     root:    process.cwd(),
-    ...config.env(),
+    ...(typeof config.env === 'function' ? config.env() : {}),
   }
 }
 
@@ -28,6 +28,6 @@ export const report = async ({ tmpdir }: ReportInput) => {
     development: `${root}/development.report`,
     production:  `${root}/production.report`,
     test:        `${root}/test.report`,
-    ...config.report(),
+    ...(typeof config.report === 'function' ? config.report() : {}),
   }
 }
