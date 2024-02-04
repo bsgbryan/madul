@@ -1,3 +1,5 @@
+import EventEmitter from "node:events"
+
 import path from "node:path"
 
 import {
@@ -9,6 +11,11 @@ import {
 import Execute, {
   add as decorate,
 } from "#Managed/Decorator"
+
+import err, {
+  emitSIGABRT,
+  thrown,
+} from "#Err"
 
 import {
   DecoratorDictionary,
@@ -22,7 +29,17 @@ import {
   WrappedFunction,
 } from "#types"
 
+const emitter = new EventEmitter()
+
+emitter.on("SIGABRT", ({ heading, details }) => {
+  console.error(`${heading}${details}`)
+
+  if (process.env.NODE_ENV !== 'test') process.exit(1)
+})
+
 let config: { compilerOptions: { paths: { [key: string]: Array<string> }}}
+
+export const Emitter = () => emitter
 
 export const Path = async (
   spec: string,
@@ -98,13 +115,13 @@ export const ExecuteInitializers = async (
 ) => {
   const asyncInits = Object.
     keys(mod).
-    filter(i => output[i].constructor.name === 'AsyncFunction' && i[0] === '$')
+    filter(i => output[i]?.constructor?.name === 'AsyncFunction' && i[0] === '$')
       
   for (const i of asyncInits) await DoWrapAsync(spec, fns, i)(params)
 
   const inits = Object.
     keys(mod).
-    filter(i => output[i].constructor.name === 'Function' && i[0] === '$')
+    filter(i => output[i]?.constructor?.name === 'Function' && i[0] === '$')
       
   for (const i of inits) await DoWrapSync(fns, i)(params)
 }
@@ -133,19 +150,22 @@ export const DoWrapAsync = (
 ): WrappedFunction => {
   const fn = async (params?: ParameterSet) =>
     new Promise(async (resolve, reject) => {
-      const input = { ...params, ...ToObjectLiteral(functions) } as ParameterSet
+      const input = { ...params, ...ToObjectLiteral(functions), self, err } as ParameterSet
 
       try {
         await Execute(spec, fun, Mode.before, input)
 
         const fn     = functions.get(fun) as Function,
-              output = await fn.call(undefined, { ...input, self }) as ParameterSet
+              output = await fn.call(undefined, input) as ParameterSet
 
         await Execute(spec, fun, Mode.after, output)
 
         resolve(output)
       }
-      catch (e) { reject(e) }
+      catch (e) {
+        if (thrown()) emitSIGABRT()
+        else reject(e)
+      }
     })
 
   fn._wrapped = fun
@@ -174,9 +194,20 @@ export const DoWrapSync = (
   self?:     Madul,
 ): WrappedFunction => {
   const fn = (params?: ParameterSet) => {
-    const fn = functions.get(fun) as Function
+    try {
+      const delegate = functions.get(fun) as Function
 
-    return fn.call(undefined, { ...params, ...ToObjectLiteral(functions), self })
+      return delegate.call(undefined, {
+        ...params,
+        ...ToObjectLiteral(functions),
+        self,
+        err,
+      })
+    }
+    catch (e) {
+      if (thrown()) emitSIGABRT()
+      else throw e
+    }
   }
 
   fn._wrapped = fun
@@ -229,7 +260,7 @@ const Bootstrap = async (
 
           remove(listeners)
         }
-        catch (e) { reject(`Error loading ${spec}: ${e}`) }
+        catch (e) { reject(`Error loading ${spec}: ${(e as unknown as Error).message}`) }
 
         break
       case null:
