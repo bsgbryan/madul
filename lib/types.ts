@@ -43,7 +43,7 @@ export type DecoratorDictionary = {
 }
 
 export interface Input {
-  self: Madul
+  self?: Madul
 }
 
 export interface Output { }
