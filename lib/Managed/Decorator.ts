@@ -1,6 +1,7 @@
 import {
   Mode,
   ParameterSet,
+  WrappedFunction,
 } from "#types"
 
 import {
@@ -21,10 +22,10 @@ export const add = (
   spec:      string,
   fun:       string,
   mode:      Mode,
-  decorator: CallableFunction,
+  decorator: WrappedFunction,
 ) => {
-  manage<CallableFunction>(scope(spec, fun, mode), {
-    key:   decorator.name,
+  manage<WrappedFunction>(scope(spec, fun, mode), {
+    key:   decorator._wrapped ? decorator._wrapped : decorator.name,
     value: decorator,
   })
 }
@@ -42,8 +43,8 @@ const Execute = async (
   mode:    Mode,
   params?: ParameterSet,
 ) => {
-  const decorators = managed<CallableFunction>(scope(spec, fun, mode))?.
-    map((d: Dictionary<CallableFunction>) => d.value)
+  const decorators = managed<WrappedFunction>(scope(spec, fun, mode))?.
+    map((d: Dictionary<WrappedFunction>) => d.value)
 
   if (decorators) {
     const args: ParameterSet = { spec, fun }

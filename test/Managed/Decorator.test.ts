@@ -22,6 +22,7 @@ import Execute, {
 
 describe('DecoratorManager', () => {
   const test = () => {}
+  test._wrapped = 'test'
 
   describe('add', () => {
     it('is a function', () => expect(typeof add).toEqual('function'))
@@ -31,12 +32,9 @@ describe('DecoratorManager', () => {
 
       const decorator = managed<CallableFunction>(scope('test', 'fun', Mode.before))
 
-      expect(decorator?.length).toEqual(1)
-
-      if (decorator) {
-        expect(decorator[0].key).toEqual('test')
-        expect(decorator[0].value).toEqual(test)
-      }
+      expect(decorator!.length).toEqual(1)
+      expect(decorator![0].key).toEqual('test')
+      expect(decorator![0].value).toEqual(test)
     })
   })
 
@@ -74,8 +72,7 @@ describe('DecoratorManager', () => {
       await Execute('test', 'fun', Mode.before)
 
       expect(ran).toBeTruthy()
-      // @ts-ignore TS thinks this is being used before it's defined; it's not
-      expect(args).toEqual({
+      expect(args!).toEqual({
         spec: 'test',
         fun:  'fun',
         input: undefined,

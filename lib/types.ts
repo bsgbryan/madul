@@ -2,8 +2,12 @@ export type MadulDictionary = {
   [name: string]: Madul | null
 }
 
+export interface WrappedFunction extends CallableFunction {
+  _wrapped?: string
+}
+
 export type Madul = {
-  [fun: string]: CallableFunction
+  [fun: string]: WrappedFunction
 }
 
 export type MadulSpec = {
