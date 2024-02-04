@@ -3,7 +3,8 @@
   "version": "2.0.0",
   "description": "A simple tool that makes writing async code fun & easy",
   "exports": {
-    ".": "./lib/Bootstrap.ts"
+    ".": "./lib/index.ts",
+    "./batteries": "./batteries/index.ts"
   },
   "files": ["lib"],
   "keywords": [
