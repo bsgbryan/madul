@@ -19,6 +19,7 @@ import {
   MadulSpec,
   Mode,
   ParameterSet,
+  WrappedFunction,
 } from "#types"
 
 let config: { compilerOptions: { paths: { [key: string]: Array<string> }}}
@@ -47,11 +48,11 @@ export const ToObjectLiteral = (
     reduce((f, [k, v]) => (f[k] = v, f), {} as FunctionObjectLiteral)
 }
 
-export const HydratDependencies = async (
+export const HydrateDependencies = async (
   dependencies: CallableFunction,
-  params:       ParameterSet,
-  root:         string,
   output:       Madul,
+  params?:      ParameterSet,
+  root?:        string,
 ) => {
   const deps        = dependencies() as DependencyDictionary,
         boostrapped = { } as MadulDictionary
@@ -67,45 +68,50 @@ export const HydratDependencies = async (
 export const HydrateDecorators = async (
   spec:       string,
   decorators: CallableFunction,
-  params:     ParameterSet,
-  root:       string,
+  params?:    ParameterSet,
+  root?:      string,
 ) => {
   for (const [fun, decs] of Object.entries(decorators() as DecoratorDictionary))
     for (const [mode, mads] of Object.entries(decs))
       for (const [mad, fns] of Object.entries(mads))
-        for await (const fn of fns)
+        for (const fn of fns)
           decorate(spec, fun, mode as Mode, (await Bootstrap(mad, params, root))[fn])
 }
 
 export const ExtractFunctions = (
-  mod:    Madul,
+  mod:    MadulSpec,
   output: Madul,
 ) => {
   return new Map(Object.
     entries({ ...mod, ...output }).
-    filter(
-      ([k, v]) => typeof v === 'function' && !k.startsWith('$')
-    )
+    filter(([k, v]) => typeof v === 'function' && !k.startsWith('$')).
+    filter(([k, _]) => k !== 'dependencies' && k !== 'decorators')
   ) as Map<string, CallableFunction>
 }
 
 export const ExecuteInitializers = async (
-  spec:   string,
-  mod:    Madul,
-  params: ParameterSet,
-  fns:    Map<string, CallableFunction>,
-  output: Madul,
+  spec:    string,
+  mod:     MadulSpec,
+  output:  Madul,
+  fns:     Map<string, CallableFunction>,
+  params?: ParameterSet,
 ) => {
-  const initers = Object.
+  const asyncInits = Object.
     keys(mod).
-    filter(i => typeof output[i] === 'function' && i[0] === '$')
+    filter(i => output[i].constructor.name === 'AsyncFunction' && i[0] === '$')
       
-  for (const i of initers) await DoWrapAsync(spec, fns, i)(params)
+  for (const i of asyncInits) await DoWrapAsync(spec, fns, i)(params)
+
+  const inits = Object.
+    keys(mod).
+    filter(i => output[i].constructor.name === 'Function' && i[0] === '$')
+      
+  for (const i of inits) await DoWrapSync(fns, i)(params)
 }
 
 export const WrapAsync = (
   spec:   string,
-  mod:    Madul,
+  mod:    MadulSpec,
   fns:    Map<string, CallableFunction>,
   output: Madul,
 ) => {
@@ -124,8 +130,8 @@ export const DoWrapAsync = (
   functions: Map<string, Function>,
   fun:       string,
   self?:     Madul,
-) => {
-  return async (params?: ParameterSet) =>
+): WrappedFunction => {
+  const fn = async (params?: ParameterSet) =>
     new Promise(async (resolve, reject) => {
       const input = { ...params, ...ToObjectLiteral(functions) } as ParameterSet
 
@@ -141,33 +147,41 @@ export const DoWrapAsync = (
       }
       catch (e) { reject(e) }
     })
+
+  fn._wrapped = fun
+
+  return fn
 }
 
 export const WrapSync = (
-  mod:    Madul,
+  mod:    MadulSpec,
   fns:    Map<string, CallableFunction>,
   output: Madul,
 ) => {
   const syncFns = new Map(Object.
     entries(mod).
     filter(
-      ([k, v]) => (v as CallableFunction).constructor.name === 'Function' && !k.startsWith('$')
+      ([k, v]) => (v as WrappedFunction).constructor.name === 'Function' && !k.startsWith('$')
     )
-  ) as Map<string, CallableFunction>
+  ) as Map<string, WrappedFunction>
 
   for (const k of syncFns.keys()) output[k] = DoWrapSync(fns, k, output)
 }
 
 export const DoWrapSync = (
   functions: Map<string, Function>,
-  method:    string,
+  fun:       string,
   self?:     Madul,
-) => {
-  return (params?: ParameterSet) => {
-    const fn = functions.get(method) as Function
+): WrappedFunction => {
+  const fn = (params?: ParameterSet) => {
+    const fn = functions.get(fun) as Function
 
     return fn.call(undefined, { ...params, ...ToObjectLiteral(functions), self })
   }
+
+  fn._wrapped = fun
+
+  return fn
 }
 
 const available: MadulDictionary = { }
@@ -194,14 +208,14 @@ const Bootstrap = async (
                 output = { } as Madul
 
           if (typeof mod.dependencies === 'function')
-            await HydratDependencies(mod.dependencies, params, root, output)
+            await HydrateDependencies(mod.dependencies, output, params, root)
 
           if (typeof mod.decorators === 'function')
             await HydrateDecorators(spec, mod.decorators, params, root)
 
           const fns = ExtractFunctions(mod, output)
 
-          await ExecuteInitializers(spec, mod, params, fns, output)
+          await ExecuteInitializers(spec, mod, output, fns, params)
 
           WrapAsync(spec, mod, fns, output)
           WrapSync(mod, fns, output)
