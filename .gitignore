@@ -1,6 +1,13 @@
+# Project stuff
+.madul
+
+# Node stuff
 node_modules
-.maduls
+
+# Bun stuff
 bun.lockb
+
+# Editor stuff
 .vscode
 
 # macOS stuff - Taken from: https://github.com/github/gitignore/blob/main/Global/macOS.gitignore
