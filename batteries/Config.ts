@@ -31,3 +31,14 @@ export const report = async ({ tmpdir }: ReportInput) => {
     ...(typeof config.report === 'function' ? config.report() : {}),
   }
 }
+
+export const debug = async () => {
+  const config = await madul('!madul.config')
+
+  return {
+  development: true,
+  production:  false,
+  test:        true,
+  ...(typeof config.debug === 'function' ? config.debug() : {}),
+  }
+}

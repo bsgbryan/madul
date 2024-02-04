@@ -6,7 +6,7 @@ export const env = () => ({
 })
 
 export const report = ({ self }: Input) => ({
-  development: `${self.env().root}/.madul/development.report`,
-  production:  `${self.env().root}/.madul/production.report`,
-  test:        `${self.env().root}/.madul/test.report`,
+  development: `${self!.env().root}/.madul/development.report`,
+  production:  `${self!.env().root}/.madul/production.report`,
+  test:        `${self!.env().root}/.madul/test.report`,
 })
