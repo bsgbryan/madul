@@ -1,12 +1,19 @@
 import { Input } from "#types"
 
-export const env = () => ({
-  current: process.env.NODE_ENV || 'development',
-  root:    process.cwd(),
+export const dependencies = () => ({
+  '@Config': ['env']
 })
 
-export const report = ({ self }: Input) => ({
-  development: `${self!.env().root}/.madul/development.report`,
-  production:  `${self!.env().root}/.madul/production.report`,
-  test:        `${self!.env().root}/.madul/test.report`,
-})
+interface ReportInput extends Input {
+  env: CallableFunction
+}
+
+export const report = async ({ env }: ReportInput) => {
+  const { root } = await env()
+
+  return {
+    development: `${root}/.madul/development.report`,
+    production:  `${root}/.madul/production.report`,
+    test:        `${root}/.madul/test.report`,
+  }
+}
