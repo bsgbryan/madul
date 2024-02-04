@@ -15,6 +15,5 @@ export const print = async ({
   env,
   value,
 }: PrintInput) => {
-  if ((await debug())[(await env()).current])
-    console.log(value)
+  (await debug())[(await env()).current](value)
 }
