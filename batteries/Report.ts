@@ -36,19 +36,19 @@ export const $init = async ({
 }
 
 export const input = async ({
-  input
+  input: _input
 }: AsyncBeforeDecorator) => {
   // Do stuff
 }
 
 export const output = async ({
-  output,
+  output: _output
 }: AsyncAfterDecorator) => {
   // Do stuff
 }
 
 export const err = async ({
-  err,
+  err: _err
 }: ErrDecorator) => {
   // Do stuff
 }
