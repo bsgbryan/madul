@@ -7,7 +7,7 @@ import {
 import {
   manage,
   managed,
-} from "#Managed/Collection"
+} from "@Collection"
 
 import {
   Mode,
@@ -18,7 +18,7 @@ import Execute, {
   add,
   remove,
   scope,
-} from "#Managed/Decorator"
+} from "#Decorator"
 
 describe('DecoratorManager', () => {
   const test = () => {}

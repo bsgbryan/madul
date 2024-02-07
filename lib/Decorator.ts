@@ -8,9 +8,9 @@ import {
   manage,
   managed,
   unmanage,
-} from "#Managed/Collection"
+} from "@Collection"
 
-import { Dictionary } from "#Managed/types"
+import { Dictionary } from "@types"
 
 export const scope = (
   spec: string,

@@ -6,11 +6,11 @@ import {
   manage as add,
   items,
   uninit as remove,
-} from "#Managed/Collection"
+} from "@Collection"
 
 import Execute, {
   add as decorate,
-} from "#Managed/Decorator"
+} from "#Decorator"
 
 import err, {
   Err,

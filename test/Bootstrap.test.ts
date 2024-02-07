@@ -4,8 +4,8 @@ import {
   it,
 } from "bun:test"
 
-import { managed } from "#Managed/Collection.ts"
-import { scope } from "#Managed/Decorator.ts"
+import { managed } from "@Collection.ts"
+import { scope } from "#Decorator.ts"
 
 import Bootstrap, {
   ExtractFunctions,
