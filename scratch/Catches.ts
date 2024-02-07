@@ -1,3 +1,5 @@
+import { Err } from "#Err"
+
 import { WrappedFunction } from "#types"
 
 export const dependencies = () => ({
@@ -6,7 +8,5 @@ export const dependencies = () => ({
 
 export const letsGO = ({ ohboy }: { ohboy: WrappedFunction }) => {
   try { ohboy() }
-  catch (e) {
-    return (e as unknown as Error).message
-  }
+  catch (e) { return (e as unknown as Err).message }
 }

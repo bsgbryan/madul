@@ -6,12 +6,14 @@ import {
 
 import Bootstrap, { Emitter } from "#Bootstrap"
 
+import { Err } from "#Err"
+
 describe('Err', () => {
   it('filters the stack trace to be only project-local lines', async () => {
     const madul = await Bootstrap('+Throws')
 
     try { madul.ohboy() }
-    catch (e) { expect((e as unknown as Error).message).toEqual('BOOM')}
+    catch (e) { expect((e as unknown as Err).message).toEqual('BOOM')}
   })
 
   it('can be caught', async () => {
@@ -23,16 +25,30 @@ describe('Err', () => {
   it('emits a SIGABRT event when not caught by the calling function', async () => {
     const madul = await Bootstrap('+DoesntCatch')
     
-    Emitter().on("SIGABRT", ({ heading, details }) => {
-      expect(heading).toInclude('BOOM')
-      expect(details).toInclude('+Throws')
-      expect(details).toInclude('ohboy')
-      expect(details).toInclude('2')
-      expect(details).toInclude('+DoesntCatch')
-      expect(details).toInclude('letsBLOW')
-      expect(details).toInclude('5')
+    Emitter().on("SIGABRT", ({ message, details }) => {
+      expect(message).toEqual('BOOM')
+      expect(details.length).toEqual(2)
+
+      expect(details[0]).toEqual({
+        fun:   'ohboy',
+        line:   2,
+        madul: '+Throws',
+        params: {
+          baz: 'bang',
+          boom: 42,
+        },
+      })
+
+      expect(details[1]).toEqual({
+        fun:   'letsBLOW',
+        line:   5,
+        madul: '+DoesntCatch',
+        params: {
+          foo: 'bar',
+        },
+      })
     })
 
-    madul.letsBLOW()
+    madul.letsBLOW({ foo: 'bar' })
   })
 })

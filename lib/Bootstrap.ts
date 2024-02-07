@@ -13,9 +13,12 @@ import Execute, {
 } from "#Managed/Decorator"
 
 import err, {
+  Err,
   emitSIGABRT,
-  thrown,
+  unhandled,
 } from "#Err"
+
+import { format } from "#Context"
 
 import {
   DecoratorDictionary,
@@ -31,8 +34,8 @@ import {
 
 const emitter = new EventEmitter()
 
-emitter.on("SIGABRT", ({ heading, details }) => {
-  console.error(`${heading}${details}`)
+emitter.on("SIGABRT", ({ message, details }) => {
+  console.error(format(message, details))
 
   if (process.env.NODE_ENV !== 'test') process.exit(1)
 })
@@ -161,7 +164,7 @@ export const DoWrapAsync = (
 ): WrappedFunction => {
   const fn = async (params?: ParameterSet) =>
     new Promise(async (resolve, reject) => {
-      const input = { ...params, ...ToObjectLiteral(functions), self, err } as ParameterSet
+      const input = { ...params, ...ToObjectLiteral(functions), self, err: err(params) } as ParameterSet
 
       try {
         await Execute(spec, fun, Mode.before, input)
@@ -174,8 +177,16 @@ export const DoWrapAsync = (
         resolve(output)
       }
       catch (e) {
-        if (thrown()) emitSIGABRT()
-        else reject(e)
+        const _ = e as unknown as Err
+
+        if (unhandled()) {
+          _.add(params || {})
+          emitSIGABRT(_.params)
+        }
+        else {
+          _.add(params || {})
+          reject(_)
+        }
       }
     })
 
@@ -212,12 +223,17 @@ export const DoWrapSync = (
         ...params,
         ...ToObjectLiteral(functions),
         self,
-        err,
+        err: err(params),
       })
     }
     catch (e) {
-      if (thrown()) emitSIGABRT()
-      else throw e
+      const _ = e as unknown as Err
+
+      if (unhandled()) {
+        _.add(params || {})
+        emitSIGABRT(_.params)
+      }
+      else throw _
     }
   }
 
