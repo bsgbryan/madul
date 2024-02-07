@@ -5,5 +5,5 @@ export const dependencies = () => ({
 })
 
 export const letsBLOW = ({ ohboy }: { ohboy: WrappedFunction }) => {
-  ohboy()
+  ohboy({ baz: 'bang', boom: 42 })
 }

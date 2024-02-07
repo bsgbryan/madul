@@ -1,32 +1,37 @@
 {
   "name": "@bsgbryan/madul",
   "version": "2.0.0",
-  "description": "A simple tool that makes writing async code fun & easy",
+  "author": "Bryan Maynard <bsgbryan@gmail.com> (https://bsgbryan.com)",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/bsgbryan/madul.git"
+  },
+  "devDependencies": {
+    "@tsconfig/bun": "^1.0.1",
+    "@tsconfig/node-lts": "^20.1.1",
+    "bun-types": "^1.0.21",
+    "typescript": "5.3.3"
+  },
   "exports": {
     ".": "./lib/index.ts",
     "./batteries": "./batteries/index.ts"
   },
-  "files": ["lib"],
+  "bugs": {
+    "url": "https://github.com/bsgbryan/madul/issues"
+  },
+  "description": "A simple tool that makes writing async code fun & easy",
+  "files": [
+    "lib"
+  ],
+  "homepage": "https://github.com/bsgbryan/madul#readme",
   "keywords": [
     "async",
     "module",
     "funtional",
     "library"
   ],
-  "author": "Bryan Maynard <bsgbryan@gmail.com> (https://bsgbryan.com)",
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/bsgbryan/madul.git"
-  },
-  "bugs": {
-    "url": "https://github.com/bsgbryan/madul/issues"
-  },
   "license": "MIT",
-  "homepage": "https://github.com/bsgbryan/madul#readme",
-  "devDependencies": {
-    "@tsconfig/bun": "^1.0.1",
-    "@tsconfig/node-lts": "^20.1.1",
-    "bun-types": "^1.0.21",
-    "typescript": "5.3.3"
+  "dependencies": {
+    "ansi-colors": "^4.1.3"
   }
 }

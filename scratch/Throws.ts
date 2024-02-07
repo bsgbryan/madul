@@ -1,5 +1,3 @@
-import err from "#Err"
-
-export const ohboy = ({ err }: { err: typeof err }) => {
+export const ohboy = ({ err }: { err: (message: string) => {} }) => {
   err('BOOM')
 }
