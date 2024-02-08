@@ -1,19 +1,20 @@
-import { Input } from "#types"
+import { formatDebug } from "#Context"
 
-export const dependencies = () => ({
-  '@Config': ['env']
+import {
+  Detail,
+} from "#types"
+
+export const report = () => ({
+  development: `${process.cwd()}/.madul/development.report`,
+  production:  `${process.cwd()}/.madul/production.report`,
+  test:        `${process.cwd()}/.madul/test.report`,
 })
 
-interface ReportInput extends Input {
-  env: CallableFunction
-}
 
-export const report = async ({ env }: ReportInput) => {
-  const { root } = await env()
+export const env = () => ({
+  current: 'test'
+})
 
-  return {
-    development: `${root}/.madul/development.report`,
-    production:  `${root}/.madul/production.report`,
-    test:        `${root}/.madul/test.report`,
-  }
-}
+export const debug = () => ({
+  test: (value: Array<Detail>) => console.debug(formatDebug(value))
+})

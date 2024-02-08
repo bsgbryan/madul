@@ -3,12 +3,15 @@ import path from "node:path"
 
 import { Emitter } from "#Bootstrap"
 
-import { ParameterSet } from "#types"
+import { Madul, ParameterSet } from "#types"
 
-let _err
+let _err: Err
+let _mode: string
 let _throws = 0
 
-export const unhandled = () => ++_throws === 4
+export const unhandled = () => {
+  return ++_throws === (_mode === 'ERROR' ? 4 : 2)
+}
 
 export const extract = (
   mapped: { [r: string]: string }
@@ -52,7 +55,7 @@ export const filterExtraneous = (
     filter((s: string) => Object.keys(mapped).find(m => s.includes(m)) !== undefined)
 }
 
-export const emitSIGABRT = (params: Array<ParameterSet>) => {
+export const details = (params: Array<ParameterSet>, e = _err) => {
   const file   = `${process.cwd()}/tsconfig.json`,
         config = readFileSync(file, { encoding: 'utf8'}),
         paths  = JSON.
@@ -69,30 +72,47 @@ export const emitSIGABRT = (params: Array<ParameterSet>) => {
       mapped[m] = k.substring(0, k.length - 1);
     }
 
-  const details = filterExtraneous(_err!.stack, mapped).
+  return filterExtraneous(e.stack, mapped).
     map(extract(mapped)).
     map(build(params))
+}
 
-  Emitter().emit("SIGABRT", { message: _err!.message, details })
+export const emitSIGABRT = (params: Array<ParameterSet>) => {
+  Emitter().emit("SIGABRT", { message: _err!.message, details: details(params) })
+}
+
+export const emitSIGDBUG = (config: Madul) => {
+  Emitter().emit("SIGDBUG", { config, details: details(_err.params) })
 }
 
 const err = (params?: ParameterSet) => (message: string) => {
-  _err = new Err(message, params || {})
+  _err  = new Err(message, params || {})
+  _mode = 'ERROR' 
+
+  throw _err
+}
+
+export const print = () => (params: ParameterSet) => {
+  _err  = new Err('', params, 'DEBUGGING')
+  _mode = 'DEBUGGING'
 
   throw _err
 }
 
 export class Err {
   #message: string
+  #mode:    string
   #params:  Array<ParameterSet> = []
-  #stack?:  string
+  #stack:   string
 
   constructor(
     message: string,
     params:  ParameterSet,
+    mode = 'ERROR',
     ) {
     this.#message = message
-    this.#stack   = new Error(message).stack
+    this.#mode    = mode
+    this.#stack   = new Error(message).stack || ''
 
     this.#params.push(params)
   }
@@ -100,6 +120,7 @@ export class Err {
   public add (params: ParameterSet) { this.#params.push(params) }
 
   get message() { return this.#message }
+  get mode   () { return this.#mode    }
   get params () { return this.#params  }
   get stack  () { return this.#stack   }
 }

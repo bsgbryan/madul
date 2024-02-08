@@ -15,10 +15,12 @@ import Execute, {
 import err, {
   Err,
   emitSIGABRT,
+  emitSIGDBUG,
+  print,
   unhandled,
 } from "#Err"
 
-import { format } from "#Context"
+import { formatErr } from "#Context"
 
 import {
   DecoratorDictionary,
@@ -35,9 +37,13 @@ import {
 const emitter = new EventEmitter()
 
 emitter.on("SIGABRT", ({ message, details }) => {
-  console.error(format(message, details))
+  console.error(formatErr(message, details))
 
   if (process.env.NODE_ENV !== 'test') process.exit(1)
+})
+
+emitter.on("SIGDBUG", ({ config, details }) => {
+  config.debug()[config.env().current](details)
 })
 
 let config: { compilerOptions: { paths: { [key: string]: Array<string> }}}
@@ -125,25 +131,27 @@ export const ExecuteInitializers = async (
   spec:    string,
   mod:     Madul,
   fns:     Map<string, CallableFunction>,
+  config:  Madul,
   params?: ParameterSet,
 ) => {
   const asyncInits = Object.
     keys(mod).
     filter(i => mod[i]?.constructor?.name === 'AsyncFunction' && i[0] === '$')
       
-  for (const i of asyncInits) await DoWrapAsync(spec, fns, i)(params)
+  for (const i of asyncInits) await DoWrapAsync(spec, fns, i, config)(params)
 
   const inits = Object.
     keys(mod).
     filter(i => mod[i]?.constructor?.name === 'Function' && i[0] === '$')
       
-  for (const i of inits) await DoWrapSync(fns, i)(params)
+  for (const i of inits) await DoWrapSync(fns, i, config)(params)
 }
 
 export const WrapAsync = (
   spec:   string,
   mod:    Madul,
   fns:    Map<string, CallableFunction>,
+  config: Madul,
   output: Madul,
 ) => {
   const asyncFns = new Map(Object.
@@ -153,18 +161,25 @@ export const WrapAsync = (
     filter(([k, _]) => k !== 'dependencies' && k !== 'decorators')
   ) as Map<string, CallableFunction>
 
-  for (const k of asyncFns.keys()) output[k] = DoWrapAsync(spec, fns, k, output)
+  for (const k of asyncFns.keys()) output[k] = DoWrapAsync(spec, fns, k, config, output)
 }
 
 export const DoWrapAsync = (
   spec:      string,
   functions: Map<string, Function>,
   fun:       string,
+  config:    Madul,
   self?:     Madul,
 ): WrappedFunction => {
   const fn = async (params?: ParameterSet) =>
     new Promise(async (resolve, reject) => {
-      const input = { ...params, ...ToObjectLiteral(functions), self, err: err(params) } as ParameterSet
+      const input = {
+        ...params,
+        ...ToObjectLiteral(functions),
+        self,
+        err: err(params),
+        print: print(),
+      } as ParameterSet
 
       try {
         await Execute(spec, fun, Mode.before, input)
@@ -179,7 +194,9 @@ export const DoWrapAsync = (
       catch (e) {
         const _ = e as unknown as Err
 
-        if (unhandled()) {
+        if (_.mode === 'DEBUGGING')
+          emitSIGDBUG(config)
+        else if (unhandled()) {
           _.add(params || {})
           emitSIGABRT(_.params)
         }
@@ -198,6 +215,7 @@ export const DoWrapAsync = (
 export const WrapSync = (
   mod:    Madul,
   fns:    Map<string, CallableFunction>,
+  config: Madul,
   output: Madul,
 ) => {
   const syncFns = new Map(Object.
@@ -207,12 +225,13 @@ export const WrapSync = (
     filter(([k, _]) => k !== 'dependencies' && k !== 'decorators')
   ) as Map<string, WrappedFunction>
 
-  for (const k of syncFns.keys()) output[k] = DoWrapSync(fns, k, output)
+  for (const k of syncFns.keys()) output[k] = DoWrapSync(fns, k, config, output)
 }
 
 export const DoWrapSync = (
   functions: Map<string, Function>,
   fun:       string,
+  config:    Madul,
   self?:     Madul,
 ): WrappedFunction => {
   const fn = (params?: ParameterSet) => {
@@ -224,12 +243,15 @@ export const DoWrapSync = (
         ...ToObjectLiteral(functions),
         self,
         err: err(params),
+        print: print(),
       })
     }
     catch (e) {
       const _ = e as unknown as Err
 
-      if (unhandled()) {
+      if (_.mode === 'DEBUGGING')
+        emitSIGDBUG(config)
+      else if (unhandled()) {
         _.add(params || {})
         emitSIGABRT(_.params)
       }
@@ -272,12 +294,13 @@ const Bootstrap = async (
           if (typeof mod.decorators === 'function')
             await HydrateDecorators(spec, mod.decorators, params, root)
 
-          const fns = ExtractFunctions(mod, proxy)
+          const fns    = ExtractFunctions(mod, proxy),
+                config = await import('./Config.ts') as unknown as Madul
 
-          await ExecuteInitializers(spec, mod, fns, params)
+          await ExecuteInitializers(spec, mod, fns, config, params)
 
-          WrapAsync(spec, mod, fns, output)
-          WrapSync(mod, fns, output)
+          WrapAsync(spec, mod, fns, config, output)
+          WrapSync(mod, fns, config, output)
 
           available[spec] = output
           
@@ -291,7 +314,8 @@ const Bootstrap = async (
         catch (e) {
           const msg = (e as unknown as Error).message
 
-          reject(`Error loading ${spec}${msg ? `: ${msg}` : ''}`) }
+          reject(`Error loading ${spec}${msg ? `: ${msg}` : ''}`)
+        }
 
         break
       case null:

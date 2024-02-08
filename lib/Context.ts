@@ -1,28 +1,9 @@
 import colors from "ansi-colors"
 
-import { WrappedFunction } from "#types"
-
-type Detail = {
-  fun: string
-  madul: string
-  line: string
-  params: {
-    [key: string]: unknown
-  }
-}
-
-const dim   = colors.dim,
-      error = colors.redBright,
-      fun   = colors.bold.whiteBright,
-      label = colors.bgRedBright.whiteBright,
-      param = colors.bgRed.whiteBright,
-      line  = colors.yellowBright,
-      madul = colors.bold.cyanBright,
-      name  = colors.whiteBright
-
-const seperator = dim('---========---'),
-      key       = (text = '') => `   ${label(`${text.padStart(7)} `)}`,
-      arg       = (text = '') => `   ${param(`${text.padStart(7)} `)}`
+import {
+  Detail,
+  WrappedFunction,
+} from "#types"
 
 export const func = (type: string, name?: string) => {
   return name ?
@@ -129,22 +110,72 @@ export const typed = (
   }
 }
 
-export const format = (message: string, details: Array<Detail>) => {
-  const _ = [`🚨 ${label('  Error ')} ${error(message)}`]
+const dim   = colors.dim,
+      fun   = colors.bold.whiteBright,
+      line  = colors.yellowBright,
+      madul = colors.bold.cyanBright,
+      name  = colors.whiteBright
+
+const seperator = dim('---========---')
+
+const error  = colors.redBright,
+      eLabel = colors.bgRedBright.whiteBright,
+      eParam = colors.bgRed.whiteBright
+
+const eKey = (text = '') => `   ${eLabel(`${text.padStart(7)} `)}`,
+      eArg = (text = '') => `   ${eParam(`${text.padStart(7)} `)}`
+
+export const formatErr = (
+  message: string,
+  details: Array<Detail>,
+) => {
+  const _ = [`🚨 ${eLabel('  Error ')} ${error(message)}`]
   
   _.push(seperator)
 
   for (const d of details) {
-    _.push(`${key('Mädūl')} ${madul(d.madul)}`)
-    _.push(`${key(  'fun')} ${fun  (d.fun  )} ${dim('line')} ${line(d.line )}`)
+    _.push(`${eKey('Mädūl')} ${madul(d.madul)}`)
+    _.push(`${eKey(  'fun')} ${fun  (d.fun  )} ${dim('line')} ${line(d.line )}`)
 
     const n = Object.keys(d.params).length === 1 ? '  param' : ' params'
     let index = 0
 
     for (const [k, v] of Object.entries(d.params)) {
-      const _k = arg(index++ === 0 ? n : undefined)
+      const _k = eArg(index++ === 0 ? n : undefined)
 
-      _.push(`${_k} ${name(k)}${dim(':')} ${typed(v as string, arg())}`)
+      _.push(`${_k} ${name(k)}${dim(':')} ${typed(v as string, eArg())}`)
+    }
+
+    _.push(seperator)
+  }
+
+  return _.join('\n')
+}
+
+const dLabel = colors.bgBlueBright.whiteBright,
+      dParam = colors.bgBlue.whiteBright
+
+const dKey = (text = '') => `   ${dLabel(`${text.padStart(7)} `)}`,
+      dArg = (text = '') => `   ${dParam(`${text.padStart(7)} `)}`
+
+export const formatDebug = (
+  details: Array<Detail>
+) => {
+  const _ = [`💡 ${dLabel('  Debug ')}`]
+  
+  _.push(seperator)
+
+  for (const d of details) {
+    _.push(`${dKey('Mädūl')} ${madul(d.madul)}`)
+    _.push(`${dKey(  'fun')} ${fun  (d.fun  )} ${dim('line')} ${line(d.line )}`)
+
+    const n = Object.keys(d.params).length === 1 ? '  param' : ' params'
+    let index = 0
+
+    for (const [k, v] of Object.entries(d.params)) {
+      const _k = dArg(index++ === 0 ? n : undefined)
+
+      _.push(`${_k} ${name(k)}${dim(':')} ${typed(v as string, dArg())}`)
     }
 
     _.push(seperator)

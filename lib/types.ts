@@ -8,6 +8,15 @@ export interface WrappedFunction extends CallableFunction {
   _wrapped?: string
 }
 
+export type Detail = {
+  fun:   string
+  madul: string
+  line:  string
+  params: {
+    [key: string]: unknown
+  }
+}
+
 export type Madul = {
   [fun: string]: WrappedFunction
 }
