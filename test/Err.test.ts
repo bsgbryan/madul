@@ -34,8 +34,37 @@ describe('Err', () => {
         line:   2,
         madul: '+Throws',
         params: {
+          aaa: 'oh, ok',
+          arg: {
+            bam: 'fom',
+            biz: false,
+            odd: [
+              'tom',
+              'tim',
+              'tam',
+              'tym',
+              'tem'
+            ],
+            oof: {
+              eek: 'yikes',
+            },
+          },
           baz: 'bang',
           boom: 42,
+          fun: expect.any(Function),
+          yay: [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+          ],
         },
       })
 
