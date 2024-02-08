@@ -60,21 +60,14 @@ describe('Context', () => {
       class Cool {}
       const cool = new Cool()
 
-      expect(typed(cool)).toEqual(['\u001B[32mCool\u001B[39m'])
+      expect(typed(cool)).toEqual('\u001B[32mCool\u001B[39m')
     })
 
     describe('handling of arrays', () => {
       it('does not truncate when an array has five items', () => {
         const names = ['alpha', 'beta', 'gamma', 'delta', 'theta']
 
-        expect(typed(names)).toEqual([
-          "\u001B[32mArray\u001B[39m",
-          "\u001B[90m0\u001B[39m\u001B[2m:\u001B[22m\u001B[37malpha\u001B[39m",
-          "\u001B[90m1\u001B[39m\u001B[2m:\u001B[22m\u001B[37mbeta\u001B[39m",
-          "\u001B[90m2\u001B[39m\u001B[2m:\u001B[22m\u001B[37mgamma\u001B[39m",
-          "\u001B[90m3\u001B[39m\u001B[2m:\u001B[22m\u001B[37mdelta\u001B[39m",
-          "\u001B[90m4\u001B[39m\u001B[2m:\u001B[22m\u001B[37mtheta\u001B[39m",
-        ])
+        expect(typed(names)).toEqual('\u001B[32mArray\u001B[39m\n   \u001B[90m0\u001B[39m\u001B[2m:\u001B[22m \u001B[37malpha\u001B[39m\n   \u001B[90m1\u001B[39m\u001B[2m:\u001B[22m \u001B[37mbeta\u001B[39m\n   \u001B[90m2\u001B[39m\u001B[2m:\u001B[22m \u001B[37mgamma\u001B[39m\n   \u001B[90m3\u001B[39m\u001B[2m:\u001B[22m \u001B[37mdelta\u001B[39m\n   \u001B[90m4\u001B[39m\u001B[2m:\u001B[22m \u001B[37mtheta\u001B[39m')
       })
 
       it('truncates an array with more than five items', () => {
@@ -85,14 +78,7 @@ describe('Context', () => {
           'alpha', 'beta', 'gamma', 'delta', 'theta',
         ]
 
-        expect(typed(names)).toEqual([
-          "\u001B[32mArray\u001B[39m",
-          "\u001B[90m 0\u001B[39m\u001B[2m:\u001B[22m \u001B[37malpha\u001B[39m",
-          "\u001B[90m 1\u001B[39m\u001B[2m:\u001B[22m \u001B[37mbeta\u001B[39m",
-          "\u001B[2m    ...\u001B[22m",
-          "\u001B[90m18\u001B[39m\u001B[2m:\u001B[22m \u001B[37mdelta\u001B[39m",
-          "\u001B[90m19\u001B[39m\u001B[2m:\u001B[22m \u001B[37mtheta\u001B[39m",
-        ])
+        expect(typed(names)).toEqual('\u001B[32mArray\u001B[39m\n   \u001B[90m 0\u001B[39m\u001B[2m:\u001B[22m \u001B[37malpha\u001B[39m\n   \u001B[90m 1\u001B[39m\u001B[2m:\u001B[22m \u001B[37mbeta\u001B[39m\n   \u001B[2m    ...\u001B[22m\n   \u001B[90m18\u001B[39m\u001B[2m:\u001B[22m \u001B[37mdelta\u001B[39m\n   \u001B[90m19\u001B[39m\u001B[2m:\u001B[22m \u001B[37mtheta\u001B[39m')
       })
     })
 
@@ -103,12 +89,7 @@ describe('Context', () => {
         boom: false,
       }
 
-      expect(typed(cool)).toEqual([
-        "\u001B[32mobject literal\u001B[39m",
-        "\u001B[37m foo\u001B[39m\u001B[2m:\u001B[22m \u001B[37mbar\u001B[39m",
-        "\u001B[37m baz\u001B[39m\u001B[2m:\u001B[22m \u001B[93m42\u001B[39m",
-        "\u001B[37mboom\u001B[39m\u001B[2m:\u001B[22m \u001B[34mfalse\u001B[39m",
-      ])
+      expect(typed(cool)).toEqual('\u001B[32mobject literal\u001B[39m\n   \u001B[37m foo\u001B[39m\u001B[2m:\u001B[22m \u001B[37mbar\u001B[39m\n   \u001B[37m baz\u001B[39m\u001B[2m:\u001B[22m \u001B[93m42\u001B[39m\n   \u001B[37mboom\u001B[39m\u001B[2m:\u001B[22m \u001B[34mfalse\u001B[39m')
     })
   })
 })
