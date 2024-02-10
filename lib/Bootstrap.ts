@@ -15,14 +15,13 @@ import Execute, {
 import err, {
   Err,
   emitSIGABRT,
-  emitSIGDBUG,
+  debug,
   print,
   unhandled,
 } from "#Err"
 
-import { formatErr } from "#Context"
-
 import {
+  DebugConfig,
   DecoratorDictionary,
   DependencyDictionary,
   FunctionObjectLiteral,
@@ -36,14 +35,18 @@ import {
 
 const emitter = new EventEmitter()
 
-emitter.on("SIGABRT", ({ message, details }) => {
-  console.error(formatErr(message, details))
-
-  if (process.env.NODE_ENV !== 'test') process.exit(1)
+process.on('uncaughtException', (e) => {
+  console.error('UNCAUGHT', e)
 })
 
-emitter.on("SIGDBUG", ({ config, details }) => {
-  config.debug[config.env.current](details)
+process.on('unhandledRejection', (e) => {
+  console.error('UNCAUGHT', e)
+})
+
+emitter.on("SIGABRT", output => {
+  console.error(output)
+
+  if (process.env.NODE_ENV !== 'test') process.exit(1)
 })
 
 let tsconfig: { compilerOptions: { paths: { [key: string]: Array<string> }}}
@@ -131,7 +134,7 @@ export const ExecuteInitializers = async (
   spec:    string,
   mod:     Madul,
   fns:     Map<string, CallableFunction>,
-  config:  Madul,
+  config:  DebugConfig,
   params?: ParameterSet,
 ) => {
   const asyncInits = Object.
@@ -151,7 +154,7 @@ export const WrapAsync = (
   spec:   string,
   mod:    Madul,
   fns:    Map<string, CallableFunction>,
-  config: Madul,
+  config: DebugConfig,
   output: Madul,
 ) => {
   const asyncFns = new Map(Object.
@@ -168,7 +171,7 @@ export const DoWrapAsync = (
   spec:      string,
   functions: Map<string, Function>,
   fun:       string,
-  config:    Madul,
+  config:    DebugConfig,
   self?:     Madul,
 ): WrappedFunction => {
   const fn = async (params?: ParameterSet) =>
@@ -194,12 +197,8 @@ export const DoWrapAsync = (
       catch (e) {
         const _ = e as unknown as Err
 
-        if (_.mode === 'DEBUGGING')
-          emitSIGDBUG(config)
-        else if (unhandled()) {
-          _.add(params || {})
-          emitSIGABRT(_.params)
-        }
+        if (_.mode === 'DEBUGGING') debug(config as DebugConfig)
+        else if (unhandled()) emitSIGABRT(params)
         else reject(_)
       }
     })
@@ -212,7 +211,7 @@ export const DoWrapAsync = (
 export const WrapSync = (
   mod:    Madul,
   fns:    Map<string, CallableFunction>,
-  config: Madul,
+  config: DebugConfig,
   output: Madul,
 ) => {
   const syncFns = new Map(Object.
@@ -228,7 +227,7 @@ export const WrapSync = (
 export const DoWrapSync = (
   functions: Map<string, Function>,
   fun:       string,
-  config:    Madul,
+  config:    DebugConfig,
   self?:     Madul,
 ): WrappedFunction => {
   const fn = (params?: ParameterSet) => {
@@ -246,12 +245,8 @@ export const DoWrapSync = (
     catch (e) {
       const _ = e as unknown as Err
 
-      if (_.mode === 'DEBUGGING')
-        emitSIGDBUG(config)
-      else if (unhandled()) {
-        _.add(params || {})
-        emitSIGABRT(_.params)
-      }
+      if (_.mode === 'DEBUGGING') debug(config)
+      else if (unhandled()) emitSIGABRT(params)
       else throw _
     }
   }
@@ -263,7 +258,7 @@ export const DoWrapSync = (
 
 const available: MadulDictionary = { }
 
-let CONFIG: Madul
+let CONFIG: DebugConfig
 
 const Bootstrap = async (
   spec: string,

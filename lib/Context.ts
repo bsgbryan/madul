@@ -135,7 +135,7 @@ export const formatErr = (
 
   for (const d of details) {
     _.push(`${eKey('Mädūl')} ${madul(d.madul)}`)
-    _.push(`${eKey(  'fun')} ${fun  (d.fun  )} ${dim('line')} ${line(d.line )}`)
+    _.push(`${eKey(  'fun')} ${fun  (d.fun  )} ${dim('line')} ${line(String(d.line))}`)
 
     const n = Object.keys(d.params).length === 1 ? '  param' : ' params'
     let index = 0
@@ -167,7 +167,7 @@ export const formatDebug = (
 
   for (const d of details) {
     _.push(`${dKey('Mädūl')} ${madul(d.madul)}`)
-    _.push(`${dKey(  'fun')} ${fun  (d.fun  )} ${dim('line')} ${line(d.line )}`)
+    _.push(`${dKey(  'fun')} ${fun  (d.fun  )} ${dim('line')} ${line(String(d.line))}`)
 
     const n = Object.keys(d.params).length === 1 ? '  param' : ' params'
     let index = 0

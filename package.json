@@ -14,7 +14,7 @@
   },
   "exports": {
     ".": "./lib/index.ts",
-    "./batteries": "./batteries/index.ts"
+    "./collection": "./lib/Collection.ts"
   },
   "bugs": {
     "url": "https://github.com/bsgbryan/madul/issues"

@@ -11,7 +11,7 @@ export interface WrappedFunction extends CallableFunction {
 export type Detail = {
   fun:   string
   madul: string
-  line:  string
+  line:  number
   params: {
     [key: string]: unknown
   }
@@ -81,4 +81,16 @@ export type Dictionary<T> = {
 
 export type ManagedCollections<T> = {
   [key: string]: Array<Dictionary<T>>
+}
+
+export type DebugConfig = {
+  debug: {
+    [name: string]: CallableFunction
+  }
+  env: {
+    current: string
+  }
+  report: {
+    [name: string]: string
+  }
 }
