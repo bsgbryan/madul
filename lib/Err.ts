@@ -6,11 +6,10 @@ import { Emitter } from "#Bootstrap"
 import { Madul, ParameterSet } from "#types"
 
 let _err: Err
-let _mode: string
 let _throws = 0
 
 export const unhandled = () => {
-  return ++_throws === (_mode === 'ERROR' ? 4 : 2)
+  return ++_throws === 4
 }
 
 export const extract = (
@@ -87,14 +86,12 @@ export const emitSIGDBUG = (config: Madul) => {
 
 const err = (params?: ParameterSet) => (message: string) => {
   _err  = new Err(message, params || {})
-  _mode = 'ERROR' 
 
   throw _err
 }
 
 export const print = () => (params: ParameterSet) => {
   _err  = new Err('', params, 'DEBUGGING')
-  _mode = 'DEBUGGING'
 
   throw _err
 }

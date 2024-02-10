@@ -200,10 +200,7 @@ export const DoWrapAsync = (
           _.add(params || {})
           emitSIGABRT(_.params)
         }
-        else {
-          _.add(params || {})
-          reject(_)
-        }
+        else reject(_)
       }
     })
 
