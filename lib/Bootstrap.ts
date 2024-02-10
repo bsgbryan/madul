@@ -43,10 +43,10 @@ emitter.on("SIGABRT", ({ message, details }) => {
 })
 
 emitter.on("SIGDBUG", ({ config, details }) => {
-  config.debug()[config.env().current](details)
+  config.debug[config.env.current](details)
 })
 
-let config: { compilerOptions: { paths: { [key: string]: Array<string> }}}
+let tsconfig: { compilerOptions: { paths: { [key: string]: Array<string> }}}
 
 export const Emitter = () => emitter
 
@@ -55,9 +55,9 @@ export const Path = async (
   root = process.cwd(),
 ) => {
   if (spec[0] === '!') return path.normalize(`${root}/${spec.substring(1)}`)
-  else if (config === undefined) config = await Bun.file(`${root}/tsconfig.json`).json()
+  else if (tsconfig === undefined) tsconfig = await Bun.file(`${root}/tsconfig.json`).json()
 
-  const paths = config?.compilerOptions?.paths
+  const paths = tsconfig?.compilerOptions?.paths
 
   if (paths) {
     const prefix = Object.keys(paths).find(p => p.substring(0, p.length - 1) === spec[0])
@@ -266,6 +266,8 @@ export const DoWrapSync = (
 
 const available: MadulDictionary = { }
 
+let CONFIG: Madul
+
 const Bootstrap = async (
   spec: string,
   params = { } as ParameterSet,
@@ -294,13 +296,22 @@ const Bootstrap = async (
           if (typeof mod.decorators === 'function')
             await HydrateDecorators(spec, mod.decorators, params, root)
 
-          const fns    = ExtractFunctions(mod, proxy),
-                config = await import('./Config.ts') as unknown as Madul
+          const fns = ExtractFunctions(mod, proxy)
 
-          await ExecuteInitializers(spec, mod, fns, config, params)
+          if (CONFIG === undefined) {
+            const conf = await import('./Config.ts')
 
-          WrapAsync(spec, mod, fns, config, output)
-          WrapSync(mod, fns, config, output)
+            CONFIG = {
+              env:    await conf.env(),
+              debug:  await conf.debug(),
+              report: await conf.report(),
+            }
+          }
+
+          await ExecuteInitializers(spec, mod, fns, CONFIG, params)
+
+          WrapAsync(spec, mod, fns, CONFIG, output)
+          WrapSync(mod, fns, CONFIG, output)
 
           available[spec] = output
           
