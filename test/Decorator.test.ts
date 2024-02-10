@@ -7,7 +7,7 @@ import {
 import {
   manage,
   managed,
-} from "@Collection"
+} from "#Collection"
 
 import {
   Mode,

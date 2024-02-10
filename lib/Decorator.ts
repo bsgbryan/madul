@@ -8,7 +8,7 @@ import {
   manage,
   managed,
   unmanage,
-} from "@Collection"
+} from "#Collection"
 
 import { Dictionary } from "@types"
 

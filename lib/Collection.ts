@@ -1,7 +1,7 @@
 import {
   Dictionary,
   ManagedCollections,
-} from "@types"
+} from "#types"
 
 const context: ManagedCollections<unknown> = { }
 
