@@ -6,7 +6,7 @@ import {
   manage as add,
   items,
   uninit as remove,
-} from "@Collection"
+} from "#Collection.ts"
 
 import Execute, {
   add as decorate,

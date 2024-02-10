@@ -13,7 +13,7 @@ import {
   unmanage,
   managed,
   uninit,
-} from "@Collection"
+} from "#Collection"
 
 describe('CollectionManager', () => {
   const cool = '😎 TEST 😎'
