@@ -96,14 +96,14 @@ export const typed = (
     case 'bigint':
     case 'number':
       if (String(value).includes('.'))
-        return `${colors.yellowBright(String(value))}`
-      else return `${colors.yellowBright(String(value))}`
+        return `${colors.magentaBright(String(value))}`
+      else return `${colors.magentaBright(String(value))}`
     case 'object':
-      if (value === null) return `${colors.blue(String(value))}`
+      if (value === null) return `${colors.blueBright(String(value))}`
       else if (Array.isArray(value)) return arr(value, left, indent, step)
       else return obj(value, left, indent + step, step)
     case 'undefined':
-    case 'boolean': return `${colors.blue(String(value))}`
+    case 'boolean': return `${colors.blueBright(String(value))}`
     case 'function':
       return func(value.constructor.name, (value as WrappedFunction)._wrapped)
     default: return ''
@@ -112,7 +112,7 @@ export const typed = (
 
 const dim   = colors.dim,
       fun   = colors.bold.whiteBright,
-      line  = colors.yellowBright,
+      line  = colors.magentaBright,
       madul = colors.bold.cyanBright,
       name  = colors.whiteBright
 
