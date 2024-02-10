@@ -6,7 +6,9 @@ import {
   manage as add,
   items,
   uninit as remove,
-} from "#Collection.ts"
+} from "#Collection"
+
+import { func } from "#Context"
 
 import Execute, {
   add as decorate,
@@ -35,16 +37,8 @@ import {
 
 const emitter = new EventEmitter()
 
-process.on('uncaughtException', (e) => {
-  console.error('UNCAUGHT', e)
-})
-
-process.on('unhandledRejection', (e) => {
-  console.error('UNCAUGHT', e)
-})
-
-emitter.on("SIGABRT", output => {
-  console.error(output)
+emitter.on("SIGABRT", err => {
+  console.error(err.toString())
 
   if (process.env.NODE_ENV !== 'test') process.exit(1)
 })
@@ -204,6 +198,7 @@ export const DoWrapAsync = (
     })
 
   fn._wrapped = fun
+  fn.toString = () => `${func('AsyncFunction', fun)}`
 
   return fn
 }
@@ -252,6 +247,7 @@ export const DoWrapSync = (
   }
 
   fn._wrapped = fun
+  fn.toString = () => `${func('Function', fun)}`
 
   return fn
 }
