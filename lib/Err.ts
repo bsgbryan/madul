@@ -1,8 +1,6 @@
 import { readFileSync } from "node:fs"
 import path from "node:path"
 
-import { Emitter } from "#Bootstrap"
-
 import { formatErr } from "#Context"
 
 import {
@@ -82,9 +80,12 @@ export const details = (params: Array<ParameterSet>, e = _err) => {
     map(build(params)) as Array<Detail>
 }
 
-export const emitSIGABRT = (params?: ParameterSet) => {
+export const handle = (params?: ParameterSet) => {
   if (params) _err.add(params)
-  Emitter().emit("SIGABRT", _err)
+  
+  console.error(_err.toString())
+
+  if (process.env.NODE_ENV !== 'test') process.exit(1)
 }
 
 export const debug = (config: DebugConfig) => {

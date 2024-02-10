@@ -1,5 +1,3 @@
-import EventEmitter from "node:events"
-
 import path from "node:path"
 
 import {
@@ -16,7 +14,7 @@ import Execute, {
 
 import err, {
   Err,
-  emitSIGABRT,
+  handle,
   debug,
   print,
   unhandled,
@@ -35,17 +33,7 @@ import {
   WrappedFunction,
 } from "#types"
 
-const emitter = new EventEmitter()
-
-emitter.on("SIGABRT", err => {
-  console.error(err.toString())
-
-  if (process.env.NODE_ENV !== 'test') process.exit(1)
-})
-
 let tsconfig: { compilerOptions: { paths: { [key: string]: Array<string> }}}
-
-export const Emitter = () => emitter
 
 export const Path = async (
   spec: string,
@@ -192,7 +180,7 @@ export const DoWrapAsync = (
         const _ = e as unknown as Err
 
         if (_.mode === 'DEBUGGING') debug(config)
-        else if (unhandled()) emitSIGABRT(params)
+        else if (unhandled()) handle(params)
         else reject(_)
       }
     })
@@ -241,7 +229,7 @@ export const DoWrapSync = (
       const _ = e as unknown as Err
 
       if (_.mode === 'DEBUGGING') debug(config)
-      else if (unhandled()) emitSIGABRT(params)
+      else if (unhandled()) handle(params)
       else throw _
     }
   }
