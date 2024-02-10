@@ -3,7 +3,13 @@ import path from "node:path"
 
 import { Emitter } from "#Bootstrap"
 
-import { Madul, ParameterSet } from "#types"
+import { formatErr } from "#Context"
+
+import {
+  DebugConfig,
+  Detail,
+  ParameterSet,
+} from "#types"
 
 let _err: Err
 let _throws = 0
@@ -41,7 +47,7 @@ export const build = (
   line:   Number(s.line),
   madul:  s.madul,
   params: params[i],
-})
+} as Detail)
 
 export const filterExtraneous = (
   stack: string,
@@ -73,15 +79,16 @@ export const details = (params: Array<ParameterSet>, e = _err) => {
 
   return filterExtraneous(e.stack, mapped).
     map(extract(mapped)).
-    map(build(params))
+    map(build(params)) as Array<Detail>
 }
 
-export const emitSIGABRT = (params: Array<ParameterSet>) => {
-  Emitter().emit("SIGABRT", { message: _err!.message, details: details(params) })
+export const emitSIGABRT = (params?: ParameterSet) => {
+  if (params) _err.add(params)
+  Emitter().emit("SIGABRT", _err.consolify())
 }
 
-export const emitSIGDBUG = (config: Madul) => {
-  Emitter().emit("SIGDBUG", { config, details: details(_err.params) })
+export const debug = (config: DebugConfig) => {
+  config.debug[config.env.current](details(_err.params, _err))
 }
 
 const err = (params?: ParameterSet) => (message: string) => {
@@ -115,6 +122,10 @@ export class Err {
   }
 
   public add (params: ParameterSet) { this.#params.push(params) }
+
+  public consolify () {
+    return formatErr(this.#message, details(this.#params, this))
+  }
 
   get message() { return this.#message }
   get mode   () { return this.#mode    }
