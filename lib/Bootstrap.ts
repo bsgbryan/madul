@@ -197,7 +197,7 @@ export const DoWrapAsync = (
       catch (e) {
         const _ = e as unknown as Err
 
-        if (_.mode === 'DEBUGGING') debug(config as DebugConfig)
+        if (_.mode === 'DEBUGGING') debug(config)
         else if (unhandled()) emitSIGABRT(params)
         else reject(_)
       }
