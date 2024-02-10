@@ -9,11 +9,11 @@ import { typed } from "#Context"
 describe('Context', () => {
   describe('typed' , () => {
     it('handles an integer properly', () => {
-      expect(typed(42)).toEqual('\u001B[93m42\u001B[39m')
+      expect(typed(42)).toEqual('\u001B[95m42\u001B[39m')
     })
 
     it('handles a float properly', () => {
-      expect(typed(3.14)).toEqual('\u001B[93m3.14\u001B[39m')
+      expect(typed(3.14)).toEqual('\u001B[95m3.14\u001B[39m')
     })
 
     it('handles a string properly', () => {
@@ -21,15 +21,15 @@ describe('Context', () => {
     })
 
     it('handles a boolean properly', () => {
-      expect(typed(false)).toEqual('\u001B[34mfalse\u001B[39m')
+      expect(typed(false)).toEqual('\u001B[94mfalse\u001B[39m')
     })
 
     it('handles null properly', () => {
-      expect(typed(null)).toEqual('\u001B[34mnull\u001B[39m')
+      expect(typed(null)).toEqual('\u001B[94mnull\u001B[39m')
     })
 
     it('handles undefined properly', () => {
-      expect(typed(undefined)).toEqual('\u001B[34mundefined\u001B[39m')
+      expect(typed(undefined)).toEqual('\u001B[94mundefined\u001B[39m')
     })
 
     it('handles an async WrappedFunction properly', () => {
@@ -89,7 +89,7 @@ describe('Context', () => {
         boom: false,
       }
 
-      expect(typed(cool)).toEqual('\u001B[32mobject literal\u001B[39m\n   \u001B[37m foo\u001B[39m\u001B[2m:\u001B[22m \u001B[37mbar\u001B[39m\n   \u001B[37m baz\u001B[39m\u001B[2m:\u001B[22m \u001B[93m42\u001B[39m\n   \u001B[37mboom\u001B[39m\u001B[2m:\u001B[22m \u001B[34mfalse\u001B[39m')
+      expect(typed(cool)).toEqual('\u001B[32mobject literal\u001B[39m\n   \u001B[37m foo\u001B[39m\u001B[2m:\u001B[22m \u001B[37mbar\u001B[39m\n   \u001B[37m baz\u001B[39m\u001B[2m:\u001B[22m \u001B[95m42\u001B[39m\n   \u001B[37mboom\u001B[39m\u001B[2m:\u001B[22m \u001B[94mfalse\u001B[39m')
     })
   })
 })
