@@ -84,7 +84,7 @@ export const details = (params: Array<ParameterSet>, e = _err) => {
 
 export const emitSIGABRT = (params?: ParameterSet) => {
   if (params) _err.add(params)
-  Emitter().emit("SIGABRT", _err.consolify())
+  Emitter().emit("SIGABRT", _err)
 }
 
 export const debug = (config: DebugConfig) => {
@@ -126,6 +126,8 @@ export class Err {
   public consolify () {
     return formatErr(this.#message, details(this.#params, this))
   }
+
+  toString () { return this.consolify() }
 
   get message() { return this.#message }
   get mode   () { return this.#mode    }
