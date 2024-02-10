@@ -1,38 +1,63 @@
+import { exists } from "node:fs/promises"
 import { tmpdir } from "node:os"
-
-import {
-  env    as _env,
-  debug  as _debug,
-  report as _report,
-} from "../madul.config"
 
 import { formatDebug } from "#Context"
 
 import { Detail } from "#types"
 
-export const dependencies = () => ({
-  '!madul.config': ['env', 'report', 'debug'],
-})
+const madconfig = `${process.cwd()}/madul.config.ts`
 
-export const env = () => ({
-  current: process.env.NODE_ENV,
-  root:    process.cwd(),
-  ...(typeof _env === 'function' ? _env() : {}),
-})
-
-export const report = () => {
-  const root = tmpdir()
-
-  return {
-    development: `${root}/development.report`,
-    production:  `${root}/production.report`,
-    test:        `${root}/test.report`,
-    ...(typeof _report === 'function' ? _report() : {}),
+export const env = async () => {
+  const base = {
+    current: process.env.NODE_ENV,
+    root:    process.cwd(),
   }
+
+  if (await exists(madconfig)) {
+    const config = await import(madconfig)
+
+    return {
+      ...base,
+      ...(typeof config.env === 'function' ? config.env() : {}),
+    }
+  }
+  else return base
 }
 
-export const debug = () => ({
-  development: (value: Array<Detail>) => console.debug(formatDebug(value)),
-  production:  (_:     string) => {},
-  ...(typeof _debug === 'function' ? _debug() : {}),
-})
+export const report = async () => {
+  const root = tmpdir(),
+        base   = {
+          development: `${root}/development.report`,
+          production:  `${root}/production.report`,
+          test:        `${root}/test.report`,
+        }
+
+  if (await exists(madconfig)) {
+    const config = await import(madconfig)
+
+    return {
+      ...base,
+      ...(typeof config.report === 'function' ? config.report() : {}),
+    }
+  }
+  else return base
+}
+
+export const debug = async () => {
+  const noop = (_: Array<Detail>) => {},
+        base = {
+          development: (value: Array<Detail>) => console.debug(formatDebug(value)),
+          production:  noop,
+          test:        noop,
+        }
+
+  if (await exists(madconfig)) {
+    const config = await import(madconfig);
+
+    return {
+      ...base,
+      ...(typeof config.debug === 'function' ? config.debug() : {}),
+    }
+  }
+  else return base
+}
