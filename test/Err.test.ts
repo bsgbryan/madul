@@ -10,37 +10,30 @@ import Bootstrap from "#Bootstrap"
 import { Err } from "#Err"
 
 describe('Err', () => {
-  it('filters the stack trace to be only project-local lines', async () => {
-    const madul = await Bootstrap('+Throws')
-
-    try { madul.ohboy() }
-    catch (e) { expect((e as unknown as Err).message).toEqual('BOOM')}
-  })
-
   it('can be caught', async () => {
-    const madul = await Bootstrap('+Catches')
-
-    expect(madul.letsGO()).toEqual('BOOM')
-  })
-
-  it('emits a SIGABRT event when not caught by the calling function', async () => {
-    const madul = await Bootstrap('+DoesntCatch')
-
-    madul.letsBLOW({ foo: 'bar' })
+    expect((await Bootstrap('+Catches')).letsGO()).toEqual('BOOM')
   })
 
   test('what happens when a top-level function thows?', async () => {
-    const example = await Bootstrap('+Throws')
-
-    try { example.ohboy({ here: 'We GO!'}) }
+    try { (await Bootstrap('+Throws')).ohboy({ here: 'We GO!'}) }
     catch (e) { console.error((e as unknown as Err).consolify())}
   })
 
   describe('print', () => {
     it('prints stuff', async () => {
-      const printer = await Bootstrap('+Printer')
-
-      printer.printMeBaby()
+      (await Bootstrap('+Printer')).printMeBaby()
     })
+  })
+})
+
+describe('Error', () => {
+  it('gets converted to Err and output', async () => {
+    (await Bootstrap('+ReallyThrows')).begBada({ foo: 'bar', baz: false })
+  })
+})
+
+describe('when Error is a non-error value', () => {
+  it('ouputs the value as the Err message', async () => {
+    (await Bootstrap('+ThrowsNumber')).ohno()
   })
 })

@@ -10,10 +10,9 @@ import {
 } from "#types"
 
 let _err: Err
-let _throws = 0
 
 export const unhandled = () => {
-  return ++_throws === 4
+  return _err.throws === 4
 }
 
 export const extract = (
@@ -83,7 +82,7 @@ export const details = (params: Array<ParameterSet>, e = _err) => {
 export const handle = (params?: ParameterSet) => {
   if (params) _err.add(params)
   
-  console.error(_err.toString())
+  console.error(String(_err))
 
   if (process.env.NODE_ENV !== 'test') process.exit(1)
 }
@@ -93,13 +92,13 @@ export const debug = (config: DebugConfig) => {
 }
 
 const err = (params?: ParameterSet) => (message: string) => {
-  _err  = new Err(message, params || {})
+  _err = new Err(message, params || {})
 
   throw _err
 }
 
 export const print = () => (params: ParameterSet) => {
-  _err  = new Err('', params, 'DEBUGGING')
+  _err = new Err('', params, 0, 'DEBUGGING')
 
   throw _err
 }
@@ -109,26 +108,50 @@ export class Err {
   #mode:    string
   #params:  Array<ParameterSet> = []
   #stack:   string
+  #throws = 0
 
   constructor(
     message: string,
     params:  ParameterSet,
-    mode = 'ERROR',
+    throws =  0,
+    mode   = 'ERROR',
+    stack  =  new Error(message).stack || '',
     ) {
     this.#message = message
     this.#mode    = mode
-    this.#stack   = new Error(message).stack || ''
+    this.#stack   = stack
+    this.#throws  = throws
 
     this.#params.push(params)
   }
 
+  public static from(e: unknown, params?: ParameterSet) {
+    const message = e instanceof Error === false ?
+      String(e)
+      :
+      e.message
+
+    const stack = e instanceof Error ?
+      e.stack
+      :
+      undefined
+
+    const _ = new Err(message, params || {}, 3, 'ERROR', stack)
+
+    _err = _
+
+    return _
+  }
+
   public add (params: ParameterSet) { this.#params.push(params) }
 
-  public consolify () {
+  public consolify() {
     return formatErr(this.#message, details(this.#params, this))
   }
 
-  toString () { return this.consolify() }
+  toString() { return this.consolify() }
+
+  get throws() { return ++this.#throws }
 
   get message() { return this.#message }
   get mode   () { return this.#mode    }
