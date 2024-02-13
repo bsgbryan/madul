@@ -10,7 +10,7 @@ import {
   unmanage,
 } from "#Collection"
 
-import { Dictionary } from "@types"
+import { Dictionary } from "#types"
 
 export const scope = (
   spec: string,

@@ -116,27 +116,25 @@ export const ExecuteInitializers = async (
   spec:    string,
   mod:     Madul,
   fns:     Map<string, CallableFunction>,
-  config:  DebugConfig,
   params?: ParameterSet,
 ) => {
   const asyncInits = Object.
     keys(mod).
     filter(i => mod[i]?.constructor?.name === 'AsyncFunction' && i[0] === '$')
       
-  for (const i of asyncInits) await DoWrapAsync(spec, fns, i, config)(params)
+  for (const i of asyncInits) await DoWrapAsync(spec, fns, i)(params)
 
   const inits = Object.
     keys(mod).
     filter(i => mod[i]?.constructor?.name === 'Function' && i[0] === '$')
       
-  for (const i of inits) await DoWrapSync(fns, i, config)(params)
+  for (const i of inits) await DoWrapSync(fns, i)(params)
 }
 
 export const WrapAsync = (
   spec:   string,
   mod:    Madul,
   fns:    Map<string, CallableFunction>,
-  config: DebugConfig,
   output: Madul,
 ) => {
   const asyncFns = new Map(Object.
@@ -146,14 +144,44 @@ export const WrapAsync = (
     filter(([k, _]) => k !== 'dependencies' && k !== 'decorators')
   ) as Map<string, CallableFunction>
 
-  for (const k of asyncFns.keys()) output[k] = DoWrapAsync(spec, fns, k, config, output)
+  for (const k of asyncFns.keys()) output[k] = DoWrapAsync(spec, fns, k, output)
+}
+
+export const WrapSync = (
+  mod:    Madul,
+  fns:    Map<string, CallableFunction>,
+  output: Madul,
+) => {
+  const syncFns = new Map(Object.
+    entries(mod).
+    filter(([_, v]) => (v as WrappedFunction).constructor.name === 'Function').
+    filter(([k, _]) => !k.startsWith('$')).
+    filter(([k, _]) => k !== 'dependencies' && k !== 'decorators')
+  ) as Map<string, WrappedFunction>
+
+  for (const k of syncFns.keys()) output[k] = DoWrapSync(fns, k, output)
+}
+
+const _handle = (
+  error:   unknown,
+  params?: ParameterSet,
+  reject?: CallableFunction,
+) => {
+  const _ = error instanceof Err === false ?
+    Err.from(error, params)
+    :
+    error
+
+  if (_.mode === 'DEBUGGING') debug(CONFIG)
+  else if (unhandled()) handle(params)
+  else if (reject) reject(_)
+  else throw _
 }
 
 export const DoWrapAsync = (
   spec:      string,
   functions: Map<string, Function>,
   fun:       string,
-  config:    DebugConfig,
   self?:     Madul,
 ): WrappedFunction => {
   const fn = async (params?: ParameterSet) =>
@@ -176,41 +204,18 @@ export const DoWrapAsync = (
 
         resolve(output)
       }
-      catch (e) {
-        const _ = e as unknown as Err
-
-        if (_.mode === 'DEBUGGING') debug(config)
-        else if (unhandled()) handle(params)
-        else reject(_)
-      }
+      catch (e) { _handle(e, params, reject) }
     })
 
   fn._wrapped = fun
-  fn.toString = () => `${func('AsyncFunction', fun)}`
+  fn.toString = () => func('AsyncFunction', fun)
 
   return fn
-}
-
-export const WrapSync = (
-  mod:    Madul,
-  fns:    Map<string, CallableFunction>,
-  config: DebugConfig,
-  output: Madul,
-) => {
-  const syncFns = new Map(Object.
-    entries(mod).
-    filter(([_, v]) => (v as WrappedFunction).constructor.name === 'Function').
-    filter(([k, _]) => !k.startsWith('$')).
-    filter(([k, _]) => k !== 'dependencies' && k !== 'decorators')
-  ) as Map<string, WrappedFunction>
-
-  for (const k of syncFns.keys()) output[k] = DoWrapSync(fns, k, config, output)
 }
 
 export const DoWrapSync = (
   functions: Map<string, Function>,
   fun:       string,
-  config:    DebugConfig,
   self?:     Madul,
 ): WrappedFunction => {
   const fn = (params?: ParameterSet) => {
@@ -225,17 +230,11 @@ export const DoWrapSync = (
         print: print(),
       })
     }
-    catch (e) {
-      const _ = e as unknown as Err
-
-      if (_.mode === 'DEBUGGING') debug(config)
-      else if (unhandled()) handle(params)
-      else throw _
-    }
+    catch (e) { _handle(e, params) }
   }
 
   fn._wrapped = fun
-  fn.toString = () => `${func('Function', fun)}`
+  fn.toString = () => func('Function', fun)
 
   return fn
 }
@@ -261,6 +260,17 @@ const Bootstrap = async (
         add(listeners, item)
 
         try {
+          if (CONFIG === undefined) {
+            // @ts-ignore
+            const conf = await import('./Config')
+
+            CONFIG = {
+              env:    await conf.env(),
+              debug:  await conf.debug(),
+              report: await conf.report(),
+            }
+          }
+
           const from   = await Path(spec, root),
                 mod    = await import(from) as MadulSpec,
                 proxy  = { } as Madul,
@@ -274,20 +284,10 @@ const Bootstrap = async (
 
           const fns = ExtractFunctions(mod, proxy)
 
-          if (CONFIG === undefined) {
-            const conf = await import('./Config.ts')
+          await ExecuteInitializers(spec, mod, fns, params)
 
-            CONFIG = {
-              env:    await conf.env(),
-              debug:  await conf.debug(),
-              report: await conf.report(),
-            }
-          }
-
-          await ExecuteInitializers(spec, mod, fns, CONFIG, params)
-
-          WrapAsync(spec, mod, fns, CONFIG, output)
-          WrapSync(mod, fns, CONFIG, output)
+          WrapAsync(spec, mod, fns, output)
+          WrapSync(mod, fns, output)
 
           available[spec] = output
           
