@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs"
 import path from "node:path"
 
-import { formatErr } from "#Context"
+import {
+  formatErrDetails,
+  formatErrMessage,
+} from "#Context"
 
 import {
   DebugConfig,
@@ -91,19 +94,23 @@ export const debug = (config: DebugConfig) => {
   config.debug[config.env.current](details(_err.params, _err))
 }
 
-const err = (params?: ParameterSet) => (message: string) => {
-  _err = new Err(message, params || {})
+const err = (params?: ParameterSet) => (message: string, context?: ParameterSet) => {
+  _err = new Err(message, params || {}, context)
 
   throw _err
 }
 
-export const print = () => (params: ParameterSet) => {
-  _err = new Err('', params, 0, 'DEBUGGING')
+export const print = () => (
+  params: ParameterSet,
+  context?: ParameterSet,
+) => {
+  _err = new Err('', params, context, 0, 'DEBUGGING')
 
   throw _err
 }
 
 export class Err {
+  #context: ParameterSet = {}
   #message: string
   #mode:    string
   #params:  Array<ParameterSet> = []
@@ -111,8 +118,9 @@ export class Err {
   #throws = 0
 
   constructor(
-    message: string,
-    params:  ParameterSet,
+    message:  string,
+    params:   ParameterSet,
+    context?: ParameterSet,
     throws =  0,
     mode   = 'ERROR',
     stack  =  new Error(message).stack || '',
@@ -123,6 +131,8 @@ export class Err {
     this.#throws  = throws
 
     this.#params.push(params)
+
+    if (context) this.#context = context
   }
 
   public static from(e: unknown, params?: ParameterSet) {
@@ -136,7 +146,7 @@ export class Err {
       :
       undefined
 
-    const _ = new Err(message, params || {}, 3, 'ERROR', stack)
+    const _ = new Err(message, params || {}, undefined, 3, 'ERROR', stack)
 
     _err = _
 
@@ -146,13 +156,20 @@ export class Err {
   public add (params: ParameterSet) { this.#params.push(params) }
 
   public consolify() {
-    return formatErr(this.#message, details(this.#params, this))
+    const p     = Object.keys(this.#params).length > 1 ? 'params' : 'param'
+    const state = {
+      context: details([this.#context])[0],
+      [p]:     details(this.#params),
+    }
+
+    return `${formatErrMessage(this.#message)}${formatErrDetails(state)}`
   }
 
   toString() { return this.consolify() }
 
   get throws() { return ++this.#throws }
 
+  get context() { return this.#context }
   get message() { return this.#message }
   get mode   () { return this.#mode    }
   get params () { return this.#params  }
