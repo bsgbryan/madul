@@ -2,28 +2,15 @@
   "name": "@bsgbryan/madul",
   "version": "2.0.0",
   "author": "Bryan Maynard <bsgbryan@gmail.com> (https://bsgbryan.com)",
+  "description": "The fun way to do functional programming in TypeScript!",
+  "homepage": "https://madul.dev",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/bsgbryan/madul.git"
   },
-  "devDependencies": {
-    "@tsconfig/bun": "^1.0.1",
-    "@tsconfig/node-lts": "^20.1.1",
-    "bun-types": "^1.0.21",
-    "typescript": "5.3.3"
-  },
-  "exports": {
-    ".": "./lib/index.ts",
-    "./collection": "./lib/Collection.ts"
-  },
   "bugs": {
     "url": "https://github.com/bsgbryan/madul/issues"
   },
-  "description": "A simple tool that makes writing async code fun & easy",
-  "files": [
-    "lib"
-  ],
-  "homepage": "https://github.com/bsgbryan/madul#readme",
   "keywords": [
     "async",
     "module",
@@ -31,7 +18,17 @@
     "library"
   ],
   "license": "MIT",
-  "dependencies": {
-    "ansi-colors": "^4.1.3"
+  "exports": {
+    ".": "./built/index.js"
+  },
+  "files": [
+    "built"
+  ],
+  "devDependencies": {
+    "@tsconfig/bun": "^1.0.1",
+    "@tsconfig/node-lts": "^20.1.1",
+    "ansi-colors": "^4.1.3",
+    "bun-types": "^1.0.21",
+    "typescript": "5.3.3"
   }
 }
