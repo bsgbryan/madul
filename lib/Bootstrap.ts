@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises"
 import path from "node:path"
 
 import {
@@ -40,7 +41,7 @@ export const Path = async (
   root = process.cwd(),
 ) => {
   if (spec[0] === '!') return path.normalize(`${root}/${spec.substring(1)}`)
-  else if (tsconfig === undefined) tsconfig = await Bun.file(`${root}/tsconfig.json`).json()
+  else if (tsconfig === undefined) tsconfig = JSON.parse(await readFile(`${root}/tsconfig.json`, { encoding: 'utf8'}))
 
   const paths = tsconfig?.compilerOptions?.paths
 

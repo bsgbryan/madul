@@ -75,11 +75,10 @@ export const obj = (
     data!.constructor.name
 
   const output = [`${colors.green(name)}`],
-        width  = Object.keys(data!).reduce((w, c) => c.length > w ? c.length : w, 0),
         pre    = ''.padStart(indent)
 
   for (const [k, v] of Object.entries(data!)) {
-    output.push(`${left} ${pre}${colors.white(k.padStart(width))}${colors.dim(':')} ${typed(v, left, indent, step)}`)
+    output.push(`${left} ${pre}${colors.white(k)}${colors.dim(':')} ${typed(v, left, indent, step)}`)
   }
 
   return output.join('\n')
@@ -116,32 +115,51 @@ const dim   = colors.dim,
       madul = colors.bold.cyanBright,
       name  = colors.whiteBright
 
-const seperator = dim('---========---')
+const seperator = dim('---=========---')
 
 const error  = colors.redBright,
       eLabel = colors.bgRedBright.whiteBright,
       eParam = colors.bgRed.whiteBright
 
-const eKey = (text = '') => `   ${eLabel(`${text.padStart(7)} `)}`,
-      eArg = (text = '') => `   ${eParam(`${text.padStart(7)} `)}`
+const eKey = (text = '') => `   ${eLabel(`${text.padStart(8)} `)}`,
+      eArg = (text = '') => `   ${eParam(`${text.padStart(8)} `)}`
 
-export const formatErr = (
-  message: string,
-  details: Array<Detail>,
+export const formatErrMessage = (value: string) =>
+  `🚨 ${eLabel('   Error ')} ${error(value)}\n`
+
+export const formatErrDetails = (
+  state: {
+    context?: Detail
+    param?:   Array<Detail>
+    params?:  Array<Detail>
+  }
 ) => {
-  const _ = [`🚨 ${eLabel('  Error ')} ${error(message)}`]
-  
-  _.push(seperator)
+  const _ = [seperator]
+  const details = state.params ? state.params : state.param
 
-  for (const d of details) {
+  for (const d of details!) {
     _.push(`${eKey('Mädūl')} ${madul(d.madul)}`)
     _.push(`${eKey(  'fun')} ${fun  (d.fun  )} ${dim('line')} ${line(String(d.line))}`)
 
-    const n = Object.keys(d.params).length === 1 ? '  param' : ' params'
     let index = 0
+    
+    if (state.context?.madul === d.madul &&
+      state.context?.fun   === d.fun   &&
+      state.context?.line  === d.line
+      ) {
+      for (const [k, v] of Object.entries(state.context.params)) {
+        const _k = eArg(index++ === 0 ? 'context' : undefined)
+  
+        _.push(`${_k} ${name(k)}${dim(':')} ${typed(v as string, eArg())}`)
+      }
+    }
+
+    index = 0
+    
+    const key = Object.keys(d.params).length > 1 ? 'params' : 'param'
 
     for (const [k, v] of Object.entries(d.params)) {
-      const _k = eArg(index++ === 0 ? n : undefined)
+      const _k = eArg(index++ === 0 ? key : undefined)
 
       _.push(`${_k} ${name(k)}${dim(':')} ${typed(v as string, eArg())}`)
     }
@@ -155,13 +173,13 @@ export const formatErr = (
 const dLabel = colors.bgBlueBright.whiteBright,
       dParam = colors.bgBlue.whiteBright
 
-const dKey = (text = '') => `   ${dLabel(`${text.padStart(7)} `)}`,
-      dArg = (text = '') => `   ${dParam(`${text.padStart(7)} `)}`
+const dKey = (text = '') => `   ${dLabel(`${text.padStart(8)} `)}`,
+      dArg = (text = '') => `   ${dParam(`${text.padStart(8)} `)}`
 
 export const formatDebug = (
   details: Array<Detail>
 ) => {
-  const _ = [`💡 ${dLabel('  Debug ')}`]
+  const _ = [`💡 ${dLabel('   Debug ')}`]
   
   _.push(seperator)
 
