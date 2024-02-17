@@ -64,12 +64,12 @@ export const ToObjectLiteral = (
 
 export const HydrateDependencies = async (
   dependencies: CallableFunction,
-  output:       Madul,
   params?:      ParameterSet,
   root?:        string,
 ) => {
   const deps        = dependencies() as DependencyDictionary,
-        boostrapped = { } as MadulDictionary
+        boostrapped = { } as MadulDictionary,
+        output      = { } as Madul
 
   for (const d of Object.keys(deps)) {
     if (d.endsWith('!')) {
@@ -83,10 +83,15 @@ export const HydrateDependencies = async (
   for (const [k, v] of Object.entries(deps)) {
     let use = k
 
-    if (k.endsWith('!')) use = k.substring(0, k.length - 1)
-
-    for (const d of v) output[d] = boostrapped[use]![d]
+    for (const d of v) {
+      output[d] = d.charCodeAt(0) > 64 && d.charCodeAt(0) < 91 ?
+        boostrapped[use]!.default
+        :
+        output[d] = boostrapped[use]![d]
+    }
   }
+
+  return output
 }
 
 export const HydrateDecorators = async (
@@ -133,12 +138,12 @@ export const ExecuteInitializers = async (
 }
 
 export const WrapAsync = (
-  spec:   string,
-  mod:    Madul,
-  fns:    Map<string, CallableFunction>,
-  output: Madul,
+  spec: string,
+  mod:  Madul,
+  fns:  Map<string, CallableFunction>,
 ) => {
-  const asyncFns = new Map(Object.
+  const output   = { } as Madul,
+        asyncFns = new Map(Object.
     entries(mod).
     filter(([_, v]) => (v as CallableFunction).constructor.name === 'AsyncFunction').
     filter(([k, _]) => !k.startsWith('$')).
@@ -146,14 +151,16 @@ export const WrapAsync = (
   ) as Map<string, CallableFunction>
 
   for (const k of asyncFns.keys()) output[k] = DoWrapAsync(spec, fns, k, output)
+
+  return output
 }
 
 export const WrapSync = (
-  mod:    Madul,
-  fns:    Map<string, CallableFunction>,
-  output: Madul,
+  mod: Madul,
+  fns: Map<string, CallableFunction>,
 ) => {
-  const syncFns = new Map(Object.
+  const output  = { } as Madul,
+        syncFns = new Map(Object.
     entries(mod).
     filter(([_, v]) => (v as WrappedFunction).constructor.name === 'Function').
     filter(([k, _]) => !k.startsWith('$')).
@@ -161,6 +168,8 @@ export const WrapSync = (
   ) as Map<string, WrappedFunction>
 
   for (const k of syncFns.keys()) output[k] = DoWrapSync(fns, k, output)
+
+  return output
 }
 
 const _handle = (
@@ -277,8 +286,12 @@ const Bootstrap = async (
                 proxy  = { } as Madul,
                 output = { } as Madul
 
-          if (typeof mod.dependencies === 'function')
-            await HydrateDependencies(mod.dependencies, proxy, params, root)
+          if (typeof mod.dependencies === 'function') {
+            const deps = await HydrateDependencies(mod.dependencies, params, root)
+
+            for (const [k, v] of Object.entries(deps))
+              proxy[k] = v
+          }
 
           if (typeof mod.decorators === 'function')
             await HydrateDecorators(spec, mod.decorators, params, root)
@@ -287,8 +300,14 @@ const Bootstrap = async (
 
           await ExecuteInitializers(spec, mod, fns, params)
 
-          WrapAsync(spec, mod, fns, output)
-          WrapSync(mod, fns, output)
+          const aWrapped = WrapAsync(spec, mod, fns)
+          const sWrapped = WrapSync(mod, fns)
+
+          for (const [k, v] of Object.entries(aWrapped))
+            output[k] = v
+
+          for (const [k, v] of Object.entries(sWrapped))
+            output[k] = v
 
           available[spec] = output
           
