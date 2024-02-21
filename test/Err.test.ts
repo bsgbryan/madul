@@ -7,7 +7,7 @@ import {
 
 import Bootstrap from "#Bootstrap"
 
-import { Err } from "#Err"
+import { OhBoyErr } from "+Throws"
 
 describe('Err', () => {
   it('can be caught', async () => {
@@ -16,7 +16,13 @@ describe('Err', () => {
 
   test('what happens when a top-level function thows?', async () => {
     try { (await Bootstrap('+Throws')).ohboy({ here: 'We GO!', o: 42, hai: undefined }) }
-    catch (e) { console.error(String(e))}
+    catch (e) {
+      console.error(String(e))
+
+      const err = e as unknown as OhBoyErr
+
+      console.log('extra', err.context.extra)
+    }
   })
 
   describe('print', () => {
