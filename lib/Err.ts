@@ -155,7 +155,7 @@ export class Err {
 
   public add (params: ParameterSet) { this.#params.push(params) }
 
-  public consolify() {
+  toString() {
     const p     = Object.keys(this.#params).length > 1 ? 'params' : 'param'
     const state = {
       context: details([this.#context])[0],
@@ -164,8 +164,6 @@ export class Err {
 
     return `${formatErrMessage(this.#message)}${formatErrDetails(state)}`
   }
-
-  toString() { return this.consolify() }
 
   get throws() { return ++this.#throws }
 

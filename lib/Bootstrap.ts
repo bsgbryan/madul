@@ -2,6 +2,11 @@ import { readFile } from "node:fs/promises"
 import path from "node:path"
 
 import {
+  CommentJSONValue,
+  parse,
+} from "comment-json"
+
+import {
   manage as add,
   items,
   uninit as remove,
@@ -34,15 +39,24 @@ import {
   WrappedFunction,
 } from "#types"
 
-let tsconfig: { compilerOptions: { paths: { [key: string]: Array<string> }}}
+let tsconfig: CommentJSONValue
 
 export const Path = async (
   spec: string,
   root = process.cwd(),
 ) => {
   if (spec[0] === '!') return path.normalize(`${root}/${spec.substring(1)}`)
-  else if (tsconfig === undefined) tsconfig = JSON.parse(await readFile(`${root}/tsconfig.json`, { encoding: 'utf8'}))
+  else if (tsconfig === undefined) {
+    try {
+      tsconfig = parse(await readFile(`${root}/tsconfig.json`, { encoding: 'utf8'}))
+    } catch (e) {
+      console.error('Could not load your tsconfig.json file:', (e as unknown as Error).message)
 
+      process.exit(1)
+    } 
+  }
+
+  // @ts-ignore
   const paths = tsconfig?.compilerOptions?.paths
 
   if (paths) {

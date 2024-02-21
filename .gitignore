@@ -6,7 +6,6 @@ node_modules
 
 # Bun stuff
 bun.lockb
-built/Bootstrap.js
 
 # Editor stuff
 .vscode

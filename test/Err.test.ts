@@ -16,7 +16,7 @@ describe('Err', () => {
 
   test('what happens when a top-level function thows?', async () => {
     try { (await Bootstrap('+Throws')).ohboy({ here: 'We GO!', o: 42, hai: undefined }) }
-    catch (e) { console.error((e as unknown as Err).consolify())}
+    catch (e) { console.error(String(e))}
   })
 
   describe('print', () => {
