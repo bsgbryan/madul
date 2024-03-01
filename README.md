@@ -2,6 +2,10 @@
 
 Madul is a simple set of tools that help you craft clean functional code that's straightforward to test - and fun to write & maintain
 
+# Docs
+
+You can find a [Getting Started Guide](https://madul.dev/docs/padawan) and more [here](https://madul.dev) - enjoy! 🤘🏻
+
 ## tl;dr
 
 ### Madul Definition: `MessageReciever.ts`
