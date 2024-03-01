@@ -1,5 +1,6 @@
 # Project stuff
 .madul
+build
 
 # Node stuff
 node_modules
