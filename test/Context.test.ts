@@ -89,7 +89,7 @@ describe('Context', () => {
         boom: false,
       }
 
-      expect(typed(cool)).toEqual('\u001B[32mobject literal\u001B[39m\n   \u001B[37m foo\u001B[39m\u001B[2m:\u001B[22m \u001B[37mbar\u001B[39m\n   \u001B[37m baz\u001B[39m\u001B[2m:\u001B[22m \u001B[95m42\u001B[39m\n   \u001B[37mboom\u001B[39m\u001B[2m:\u001B[22m \u001B[94mfalse\u001B[39m')
+      expect(typed(cool)).toEqual('\u001B[32mobject literal\u001B[39m\n   \u001B[37mfoo\u001B[39m\u001B[2m:\u001B[22m \u001B[37mbar\u001B[39m\n   \u001B[37mbaz\u001B[39m\u001B[2m:\u001B[22m \u001B[95m42\u001B[39m\n   \u001B[37mboom\u001B[39m\u001B[2m:\u001B[22m \u001B[94mfalse\u001B[39m')
     })
   })
 })
