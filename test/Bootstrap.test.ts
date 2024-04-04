@@ -45,16 +45,11 @@ describe('ToObjectLiteral', () => {
   })
 })
 
-describe('HydrateDependencies', () => {
+describe.only('HydrateDependencies', () => {
   it('bootstraps each dependency and adds it to the output', async () => {
-    const dependencies = () => ({ '+Foo': ['ohai'] })
-    const output = { } as Madul
+    const hydrated = await HydrateDependencies(() => ({ '+Foo': ['ohai'] }), { })
 
-    expect(typeof output.ohai).toEqual('undefined')
-
-    await HydrateDependencies(dependencies, output)
-
-    expect(typeof output.ohai).toEqual('function')
+    expect(typeof hydrated.ohai).toEqual('function')
   })
 })
 

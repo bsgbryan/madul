@@ -98,10 +98,10 @@ export const HydrateDependencies = async (
     let use = k
 
     for (const d of v) {
-      output[d] = d.charCodeAt(0) > 64 && d.charCodeAt(0) < 91 ?
+      output[d] = d[0].match(/[A-Z]/) ?
         boostrapped[use]!.default
         :
-        output[d] = boostrapped[use]![d]
+        boostrapped[use]![d]
     }
   }
 
