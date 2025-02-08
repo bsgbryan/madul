@@ -48,7 +48,7 @@ export const Path = async (
   if (spec[0] === '!') return path.normalize(`${root}/${spec.substring(1)}`)
   else if (tsconfig === undefined) {
     try {
-      tsconfig = parse(await readFile(`${root}/tsconfig.json`, { encoding: 'utf8'}))
+      tsconfig = parse(await readFile(`${root}/tsconfig.json`, { encoding: 'utf8' }))
     } catch (e) {
       console.error('Could not load your tsconfig.json file:', (e as unknown as Error).message)
 
