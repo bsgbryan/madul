@@ -1,6 +1,6 @@
 # Project stuff
 .madul
-build
+built.js
 
 # Node stuff
 node_modules
