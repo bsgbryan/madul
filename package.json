@@ -1,6 +1,6 @@
 {
   "name": "@bsgbryan/madul",
-  "version": "2.0.1",
+  "version": "2.0.5",
   "author": "Bryan Maynard <bsgbryan@gmail.com> (https://bsgbryan.com)",
   "description": "The fun way to do functional programming in TypeScript!",
   "homepage": "https://madul.dev",
@@ -19,13 +19,16 @@
     "library"
   ],
   "imports": {
-    "#Bootstrap": "./lib/Bootstrap.ts",
-    "#Collection": "./lib/Collection.ts",
-    "#Context": "./lib/Context.ts",
-    "#Decorator": "./lib/Decorator.ts",
-    "#Err": "./lib/Err.ts",
-    "#types": "./lib/types.ts"
+    "#Bootstrap": "./lib/Bootstrap.js",
+    "#Collection": "./lib/Collection.js",
+    "#Context": "./lib/Context.js",
+    "#Decorator": "./lib/Decorator.js",
+    "#Err": "./lib/Err.js",
+    "#types": "./lib/types.js"
   },
+  "files": [
+    "./lib/*.js"
+  ],
   "main": "./lib/index.js",
   "license": "MIT",
   "devDependencies": {
