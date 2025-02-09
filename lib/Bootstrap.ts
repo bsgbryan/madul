@@ -285,8 +285,7 @@ const Bootstrap = async (
 
         try {
           if (CONFIG === undefined) {
-            // @ts-ignore
-            const conf = await import('./Config')
+            const conf = await import('./Config.js')
 
             CONFIG = {
               env:    await conf.env(),
