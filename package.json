@@ -4,6 +4,7 @@
   "author": "Bryan Maynard <bsgbryan@gmail.com> (https://bsgbryan.com)",
   "description": "The fun way to do functional programming in TypeScript!",
   "homepage": "https://madul.dev",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/bsgbryan/madul.git"
@@ -17,13 +18,16 @@
     "funtional",
     "library"
   ],
-  "license": "MIT",
-  "exports": {
-    ".": "./built.js"
+  "imports": {
+    "#Bootstrap": "./lib/Bootstrap.ts",
+    "#Collection": "./lib/Collection.ts",
+    "#Context": "./lib/Context.ts",
+    "#Decorator": "./lib/Decorator.ts",
+    "#Err": "./lib/Err.ts",
+    "#types": "./lib/types.ts"
   },
-  "files": [
-    "./built.js"
-  ],
+  "main": "./lib/index.js",
+  "license": "MIT",
   "devDependencies": {
     "@tsconfig/bun": "^1.0.7",
     "@tsconfig/node-lts": "22.0.1",

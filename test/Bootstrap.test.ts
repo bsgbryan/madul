@@ -4,8 +4,8 @@ import {
   it,
 } from "bun:test"
 
-import { managed } from "#Collection.ts"
-import { scope } from "#Decorator.ts"
+import { managed } from "#Collection"
+import { scope } from "#Decorator"
 
 import Bootstrap, {
   ExtractFunctions,
@@ -16,11 +16,10 @@ import Bootstrap, {
 } from "#Bootstrap"
 
 import {
-  Madul,
-  MadulSpec,
+  type MadulSpec,
   Mode,
-  WrappedFunction,
-} from "#types.ts"
+  type WrappedFunction,
+} from "#types"
 
 describe('Path', () => {
   it('is a function', () => expect(typeof Path).toBe('function'))

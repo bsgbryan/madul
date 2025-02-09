@@ -1,6 +1,6 @@
 import {
-  Dictionary,
-  ManagedCollections,
+  type Dictionary,
+  type ManagedCollections,
 } from "#types"
 
 const context: ManagedCollections<unknown> = { }

@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises"
 import path from "node:path"
 
 import {
-  CommentJSONValue,
+  type CommentJSONValue,
   parse,
 } from "comment-json"
 
@@ -27,16 +27,16 @@ import err, {
 } from "#Err"
 
 import {
-  DebugConfig,
-  DecoratorDictionary,
-  DependencyDictionary,
-  FunctionObjectLiteral,
-  Madul,
-  MadulDictionary,
-  MadulSpec,
+  type DebugConfig,
+  type DecoratorDictionary,
+  type DependencyDictionary,
+  type FunctionObjectLiteral,
+  type Madul,
+  type MadulDictionary,
+  type MadulSpec,
   Mode,
-  ParameterSet,
-  WrappedFunction,
+  type ParameterSet,
+  type WrappedFunction,
 } from "#types"
 
 let tsconfig: CommentJSONValue
@@ -127,7 +127,7 @@ export const ExtractFunctions = (
 ) => {
   return new Map(Object.
     entries({ ...mod, ...output }).
-    filter(([k, v]) => typeof v === 'function').
+    filter(([_, v]) => typeof v === 'function').
     filter(([k, _]) => k !== 'dependencies' && k !== 'decorators')
   ) as Map<string, CallableFunction>
 }

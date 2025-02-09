@@ -7,9 +7,9 @@ import {
 } from "#Context"
 
 import {
-  DebugConfig,
-  Detail,
-  ParameterSet,
+  type DebugConfig,
+  type Detail,
+  type ParameterSet,
 } from "#types"
 
 let _err: Err

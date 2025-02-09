@@ -3,7 +3,7 @@ import { tmpdir } from "node:os"
 
 import { formatDebug } from "#Context"
 
-import { Detail } from "#types"
+import { type Detail } from "#types"
 
 const madconfig = `${process.cwd()}/madul.config.ts`
 

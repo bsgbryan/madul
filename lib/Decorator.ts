@@ -1,7 +1,7 @@
 import {
   Mode,
-  ParameterSet,
-  WrappedFunction,
+  type ParameterSet,
+  type WrappedFunction,
 } from "#types"
 
 import {
@@ -10,7 +10,7 @@ import {
   unmanage,
 } from "#Collection"
 
-import { Dictionary } from "#types"
+import { type Dictionary } from "#types"
 
 export const scope = (
   spec: string,

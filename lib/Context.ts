@@ -1,8 +1,8 @@
 import colors from "ansi-colors"
 
 import {
-  Detail,
-  WrappedFunction,
+  type Detail,
+  type WrappedFunction,
 } from "#types"
 
 export const func = (type: string, name?: string) => {

@@ -1,13 +1,15 @@
 {
-  "extends": [
-    "@tsconfig/bun/tsconfig.json",
-    "@tsconfig/node-lts/tsconfig.json"
-  ],
+  "extends": [ "@tsconfig/node-lts/tsconfig.json" ],
   "compilerOptions": {
+    "noPropertyAccessFromIndexSignature": false,
     "types": ["bun-types"],
+    "rootDir": ".",
     "paths": {
       "#*": ["./lib/*"],
       "+*": ["./scratch/*"]
     }
-  }
+  },
+  "files": [ "lib/index.ts" ],
+  "include": [ "lib" ],
+  "exclude": [ "node_modules" ]
 }

@@ -1,6 +1,6 @@
 import { Err } from "#Err"
 
-import { WrappedFunction } from "#types"
+import { type WrappedFunction } from "#types"
 
 export const dependencies = () => ({
   '+Throws': ['ohboy']

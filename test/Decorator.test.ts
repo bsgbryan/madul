@@ -11,7 +11,7 @@ import {
 
 import {
   Mode,
-  ParameterSet,
+  type ParameterSet,
 } from "#types"
 
 import Execute, {
