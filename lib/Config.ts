@@ -13,7 +13,7 @@ export const env = async () => {
     root:    process.cwd(),
   }
 
-  if (await exists(madconfig)) {
+  if (exists && await exists(madconfig)) {
     const config = await import(madconfig)
 
     return {
@@ -32,7 +32,7 @@ export const report = async () => {
           test:        `${root}/test.report`,
         }
 
-  if (await exists(madconfig)) {
+  if (exists && await exists(madconfig)) {
     const config = await import(madconfig)
 
     return {
@@ -51,7 +51,7 @@ export const debug = async () => {
           test:        noop,
         }
 
-  if (await exists(madconfig)) {
+  if (exists && await exists(madconfig)) {
     const config = await import(madconfig);
 
     return {
