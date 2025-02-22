@@ -19,17 +19,17 @@
     "library"
   ],
   "imports": {
-    "#Bootstrap": "./lib/Bootstrap.js",
-    "#Collection": "./lib/Collection.js",
-    "#Context": "./lib/Context.js",
-    "#Decorator": "./lib/Decorator.js",
-    "#Err": "./lib/Err.js",
-    "#types": "./lib/types.js"
+    "#Bootstrap": "./lib/Bootstrap.ts",
+    "#Collection": "./lib/Collection.ts",
+    "#Context": "./lib/Context.ts",
+    "#Decorator": "./lib/Decorator.ts",
+    "#Err": "./lib/Err.ts",
+    "#types": "./lib/types.ts"
   },
   "files": [
-    "./lib/*.js"
+    "./.bundled/index.js"
   ],
-  "main": "./lib/index.js",
+  "main": "./.bundled/index.js",
   "license": "MIT",
   "devDependencies": {
     "@tsconfig/bun": "^1.0.7",
