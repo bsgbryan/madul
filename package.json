@@ -1,6 +1,6 @@
 {
   "name": "@bsgbryan/madul",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "author": "Bryan Maynard <bsgbryan@gmail.com> (https://bsgbryan.com)",
   "description": "The fun way to do functional programming in TypeScript!",
   "homepage": "https://madul.dev",
