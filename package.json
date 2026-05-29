@@ -9,6 +9,9 @@
     "type": "git",
     "url": "git+ssh://git@github.com/bsgbryan/madul.git"
   },
+  "scripts": {
+  	"build": "tsc"
+  },
   "bugs": {
     "url": "https://github.com/bsgbryan/madul/issues"
   },
@@ -27,9 +30,9 @@
     "#types": "./lib/types.ts"
   },
   "files": [
-    "./.bundled/index.js"
+    "./lib/index.ts"
   ],
-  "main": "./.bundled/index.js",
+  "main": "./lib/index.ts",
   "license": "MIT",
   "devDependencies": {
     "@tsconfig/bun": "^1.0.7",

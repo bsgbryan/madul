@@ -1,10 +1,7 @@
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 
-import {
-  type CommentJSONValue,
-  parse,
-} from "comment-json"
+import { parse } from "comment-json"
 
 import {
   manage as add,
@@ -39,32 +36,51 @@ import {
   type WrappedFunction,
 } from "#types"
 
-let tsconfig: CommentJSONValue
+type Config = {
+	compilerOptions: {
+		paths: {
+			[k: string]: string[]
+		}
+	}
+}
+
+const tsconfig: Map<string, Config> = new Map()
+const associations: {root: string, paths: string[]}[] = []
 
 export const Path = async (
   spec: string,
   root = process.cwd(),
 ) => {
-  if (spec[0] === '!') return path.normalize(`${root}/${spec.substring(1)}`)
-  else if (tsconfig === undefined) {
-    try {
-      tsconfig = parse(await readFile(`${root}/tsconfig.json`, { encoding: 'utf8' }))
+	if (spec[0] === '!') return path.normalize(`${root}/${spec.substring(1)}`)
+  else if (!tsconfig.has(root)) {
+		try {
+			const config = parse(await readFile(`${root}/tsconfig.json`, { encoding: 'utf8' })) as unknown as Config
+			const paths = Object.keys(config?.compilerOptions?.paths)
+			tsconfig.set(root, config)
+			associations.push({root, paths})
     } catch (e) {
       console.error('Could not load your tsconfig.json file:', (e as unknown as Error).message)
 
       process.exit(1)
-    } 
+    }
   }
 
-  // @ts-ignore
-  const paths = tsconfig?.compilerOptions?.paths
+	const config = associations.find(a => a.paths.findIndex(i => spec.startsWith(i.substring(0, i.length - 1))) > -1)
+	if (!config) throw new Error(`Could not find a tsconfig to load ${spec}`)
+	const paths = tsconfig.get(config?.root!)?.compilerOptions?.paths
 
   if (paths) {
-    const prefix = Object.keys(paths).find(p => p.substring(0, p.length - 1) === spec[0])
+		const prefix = Object.keys(paths).find(p => spec.startsWith(p.substring(0, p.length - 1)))
+		const p = paths[prefix!][0].substring(0, paths[prefix!][0].length - 2)
+		const ch = spec.charCodeAt(0)
+		const name = (ch > 64 && ch < 123) ?
+			spec.split(':')[1]
+			:
+			spec.substring(1)
 
-    if (prefix) return path.normalize(`${root}/${paths[prefix][0].replace('*', spec.substring(1))}`)
+    if (prefix) return path.normalize(`${config.root}/${p}/${name}`)
     else if (spec.charCodeAt(0) > 96 && spec.charCodeAt(0) < 123) return spec
-    else throw new Error(`Could not find ${spec[0]} in compilerOptions.paths: ${JSON.stringify(paths, null, 2)}`)
+    else throw new Error(`Could not find ${spec} in ${config.root}: ${JSON.stringify(paths, null, 2)}`)
   }
   else throw new Error("No compilerOptions.paths defined in tsconfig.json")
 }
@@ -141,13 +157,13 @@ export const ExecuteInitializers = async (
   const asyncInits = Object.
     keys(mod).
     filter(i => mod[i]?.constructor?.name === 'AsyncFunction' && i[0] === '$')
-      
+
   for (const i of asyncInits) await DoWrapAsync(spec, fns, i)(params)
 
   const inits = Object.
     keys(mod).
     filter(i => mod[i]?.constructor?.name === 'Function' && i[0] === '$')
-      
+
   for (const i of inits) await DoWrapSync(fns, i)(params)
 }
 
@@ -323,7 +339,7 @@ const Bootstrap = async (
             output[k] = v
 
           available[spec] = output
-          
+
           const callbacks = items<CallableFunction>(listeners)
 
           if (Array.isArray(callbacks))
