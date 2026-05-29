@@ -4,7 +4,7 @@ import {
   it,
 } from "bun:test"
 
-import { typed } from "#Context"
+import { typed } from "../lib/Context"
 
 describe('Context', () => {
   describe('typed' , () => {

@@ -5,17 +5,17 @@ import {
   test,
 } from "bun:test"
 
-import Bootstrap from "#Bootstrap"
+import Bootstrap from "../lib/Bootstrap"
 
-import { OhBoyErr } from "+Throws"
+import type { OhBoyErr } from "../scratch/Throws"
 
 describe('Err', () => {
   it('can be caught', async () => {
-    expect((await Bootstrap('+Catches')).letsGO()).toEqual('BOOM')
+    expect((await Bootstrap('+Catches')).letsGO!()).toEqual('BOOM')
   })
 
   test('what happens when a top-level function thows?', async () => {
-    try { (await Bootstrap('+Throws')).ohboy({ here: 'We GO!', o: 42, hai: undefined }) }
+    try { (await Bootstrap('+Throws')).ohboy!({ here: 'We GO!', o: 42, hai: undefined }) }
     catch (e) {
       console.error(String(e))
 
@@ -27,19 +27,19 @@ describe('Err', () => {
 
   describe('print', () => {
     it('prints stuff', async () => {
-      (await Bootstrap('+Printer')).printMeBaby()
+      (await Bootstrap('+Printer')).printMeBaby!()
     })
   })
 })
 
 describe('Error', () => {
   it('gets converted to Err and output', async () => {
-    (await Bootstrap('+ReallyThrows')).begBada({ foo: 'bar', baz: false })
+    (await Bootstrap('+ReallyThrows')).begBada!({ foo: 'bar', baz: false })
   })
 })
 
 describe('when Error is a non-error value', () => {
   it('ouputs the value as the Err message', async () => {
-    (await Bootstrap('+ThrowsNumber')).ohno()
+    (await Bootstrap('+ThrowsNumber')).ohno!()
   })
 })

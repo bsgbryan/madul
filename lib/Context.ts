@@ -3,7 +3,7 @@ import colors from "ansi-colors"
 import {
   type Detail,
   type WrappedFunction,
-} from "#types"
+} from "./types"
 
 export const func = (type: string, name?: string) => {
   return name ?

@@ -4,13 +4,13 @@ import path from "node:path"
 import {
   formatErrDetails,
   formatErrMessage,
-} from "#Context"
+} from "./Context"
 
 import {
   type DebugConfig,
   type Detail,
   type ParameterSet,
-} from "#types"
+} from "./types"
 
 let _err: Err
 
@@ -26,9 +26,9 @@ export const extract = (
   const tokens = trace.split(' ')
 
   const fun = tokens[0] === '<anonymous>' ? tokens[0].substring(1, tokens[0].length - 1) : tokens[0],
-        loc = tokens[1].substring(1, tokens[1].length - 1).split(':'),
-        __m = Object.keys(mapped).find(m => loc[0].startsWith(m)),
-        mad = loc[0].replace(`${__m!}/`, mapped[__m!])
+        loc = tokens[1]!.substring(1, tokens[1]!.length - 1).split(':'),
+        __m = Object.keys(mapped).find(m => loc[0]!.startsWith(m)),
+        mad = loc[0]!.replace(`${__m!}/`, mapped[__m!]!)
 
   return {
     fun,
@@ -78,7 +78,8 @@ export const details = (params: Array<ParameterSet>, e = _err) => {
     }
 
   return filterExtraneous(e.stack, mapped).
-    map(extract(mapped)).
+		map(extract(mapped)).
+    // @ts-ignore
     map(build(params)) as Array<Detail>
 }
 
@@ -91,7 +92,7 @@ export const handle = (params?: ParameterSet) => {
 }
 
 export const debug = (config: DebugConfig) => {
-  config.debug[config.env.current](details(_err.params, _err))
+  config.debug[config.env.current]!(details(_err.params, _err))
 }
 
 const err = (params?: ParameterSet) => (message: string, context?: ParameterSet) => {

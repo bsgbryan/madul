@@ -21,14 +21,6 @@
     "funtional",
     "library"
   ],
-  "imports": {
-    "#Bootstrap": "./lib/Bootstrap.ts",
-    "#Collection": "./lib/Collection.ts",
-    "#Context": "./lib/Context.ts",
-    "#Decorator": "./lib/Decorator.ts",
-    "#Err": "./lib/Err.ts",
-    "#types": "./lib/types.ts"
-  },
   "exports": {
 	 	".": {
 	    "require": {
@@ -52,15 +44,18 @@
     "./lib/index.ts",
     "./lib/types.ts"
   ],
-  "license": "MIT",
-  "devDependencies": {
-    "@tsconfig/bun": "^1.0.7",
-    "@tsconfig/node-lts": "22.0.1",
-    "bun-types": "^1.2.2",
-    "typescript": "5.3.3"
+  "directories": {
+  	"lib": "lib"
   },
+  "license": "MIT",
   "dependencies": {
     "ansi-colors": "^4.1.3",
     "comment-json": "^4.2.5"
-  }
+  },
+  "devDependencies": {
+	  "@types/bun": "latest"
+  },
+	"peerDependencies": {
+	  "typescript": "^6.0.3"
+	}
 }

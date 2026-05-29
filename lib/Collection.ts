@@ -1,7 +1,7 @@
 import {
   type Dictionary,
   type ManagedCollections,
-} from "#types"
+} from "./types"
 
 const context: ManagedCollections<unknown> = { }
 
@@ -26,10 +26,10 @@ export const reinit = (
     // become stale, and clients would have no way of knowing that.
     // The connection to clients would be broken, and there would be no way for them to know they
     // needed to call get()/getAll() again to resync their reference(s).
-    const count = context[colleciton].length
+    const count = context[colleciton]!.length
 
     for (let i = 0; i < count; i++)
-      context[colleciton].pop()
+      context[colleciton]!.pop()
 
     return true
   }
@@ -55,7 +55,7 @@ export const manage = <T>(
 
   if (Array.isArray(item)) {
     for (const i of item)
-      if (i.key !== null && context[collection].some(d => d.key === i.key))
+      if (i.key !== null && context[collection]!.some(d => d.key === i.key))
         return false
 
     for (const i of item)
@@ -64,8 +64,8 @@ export const manage = <T>(
     return true
   }
   else {
-    if (item.key !== null && context[collection].some(d => d.key === item.key) === false) {
-      context[collection].push({
+    if (item.key !== null && context[collection]!.some(d => d.key === item.key) === false) {
+      context[collection]!.push({
         key:   item.key,
         value: item.value,
       })
@@ -73,7 +73,7 @@ export const manage = <T>(
       return true
     }
     else if (item.key === null) {
-      context[collection].push({
+      context[collection]!.push({
         key:   null,
         value: item.value,
       })
@@ -88,9 +88,9 @@ export const unmanage = (
   collection: string,
   key:        string,
 ): boolean => {
-  if (Array.isArray(context[collection]) && context[collection].some(d => d.key === key)) {
-    context[collection].splice(
-      context[collection].findIndex((d: Dictionary<unknown>) => d.key === key),
+  if (Array.isArray(context[collection]) && context[collection]!.some(d => d.key === key)) {
+    context[collection]!.splice(
+      context[collection]!.findIndex((d: Dictionary<unknown>) => d.key === key),
       1
     )
 
@@ -112,7 +112,7 @@ export const item = <T>(
   key:        string,
 ): T | undefined => {
   if (Array.isArray(context[collection]))
-    return context[collection].find(m => m.key === key)?.value as T
+    return context[collection]!.find(m => m.key === key)?.value as T
   else return undefined
 }
 
@@ -120,6 +120,6 @@ export const items = <T>(
   collection: string,
 ): Array<T> | undefined => {
   if (Array.isArray(context[collection]))
-    return context[collection].map(c => c.value) as Array<T>
+    return context[collection]!.map(c => c.value) as Array<T>
   else return undefined
 }

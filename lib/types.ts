@@ -1,4 +1,4 @@
-import err from "#Err"
+import err from "./Err"
 
 export type MadulDictionary = {
   [name: string]: Madul | null

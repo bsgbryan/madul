@@ -1,6 +1,6 @@
-import type { Madul as MadulType } from "#types"
+import type { Madul as MadulType } from "./types"
 
-import Bootstrap from "#Bootstrap"
+import Bootstrap from "./Bootstrap"
 
 const madul = Bootstrap
 

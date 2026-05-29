@@ -2,15 +2,15 @@ import {
   Mode,
   type ParameterSet,
   type WrappedFunction,
-} from "#types"
+} from "./types"
 
 import {
   manage,
   managed,
   unmanage,
-} from "#Collection"
+} from "./Collection"
 
-import { type Dictionary } from "#types"
+import { type Dictionary } from "./types"
 
 export const scope = (
   spec: string,

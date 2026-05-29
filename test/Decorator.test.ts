@@ -7,18 +7,18 @@ import {
 import {
   manage,
   managed,
-} from "#Collection"
+} from "../lib/Collection"
 
 import {
   Mode,
   type ParameterSet,
-} from "#types"
+} from "../lib/types"
 
 import Execute, {
   add,
   remove,
   scope,
-} from "#Decorator"
+} from "../lib/Decorator"
 
 describe('DecoratorManager', () => {
   const test = () => {}
@@ -33,8 +33,8 @@ describe('DecoratorManager', () => {
       const decorator = managed<CallableFunction>(scope('test', 'fun', Mode.before))
 
       expect(decorator!.length).toEqual(1)
-      expect(decorator![0].key).toEqual('test')
-      expect(decorator![0].value).toEqual(test)
+      expect(decorator![0]!.key).toEqual('test')
+      expect(decorator![0]!.value).toEqual(test)
     })
   })
 

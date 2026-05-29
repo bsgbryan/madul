@@ -13,7 +13,7 @@ import {
   unmanage,
   managed,
   uninit,
-} from "#Collection"
+} from "../lib/Collection"
 
 describe('CollectionManager', () => {
   const cool = '😎 TEST 😎'
@@ -158,9 +158,9 @@ describe('CollectionManager', () => {
         expect(collection?.length).toEqual(1)
   
         if (collection) {
-          expect(collection[0].key).toEqual('foo')
-          expect(typeof collection[0].value).toBe('string')
-          expect(collection[0].value).toEqual('foo')
+          expect(collection[0]!.key).toEqual('foo')
+          expect(typeof collection[0]!.value).toBe('string')
+          expect(collection[0]!.value).toEqual('foo')
         }
       })
     })
@@ -224,8 +224,8 @@ describe('CollectionManager', () => {
         expect(decorators?.length).toEqual(2)
   
         if (decorators) {
-          expect(decorators[0].key).toEqual('foo')
-          expect(decorators[0].value).toEqual('foo')
+          expect(decorators[0]!.key).toEqual('foo')
+          expect(decorators[0]!.value).toEqual('foo')
         }
   
         unmanage(cool, 'foo')
@@ -233,8 +233,8 @@ describe('CollectionManager', () => {
         expect(decorators?.length).toEqual(1)
   
         if (decorators) {
-          expect(decorators[0].key).toEqual('bar')
-          expect(decorators[0].value).toEqual('bar')
+          expect(decorators[0]!.key).toEqual('bar')
+          expect(decorators[0]!.value).toEqual('bar')
         }
       })
     })
@@ -262,10 +262,10 @@ describe('CollectionManager', () => {
 
       if (collection) {
         expect(typeof collection[0]).toEqual('object')
-        expect(typeof collection[0].key).toEqual('string')
-        expect(typeof collection[0].value).toEqual('string')
-        expect(collection[0].key).toEqual('foo')
-        expect(collection[0].value).toEqual('foo')
+        expect(typeof collection[0]!.key).toEqual('string')
+        expect(typeof collection[0]!.value).toEqual('string')
+        expect(collection[0]!.key).toEqual('foo')
+        expect(collection[0]!.value).toEqual('foo')
       }
     })
   })

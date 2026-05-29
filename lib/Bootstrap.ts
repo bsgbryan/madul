@@ -7,13 +7,13 @@ import {
   manage as add,
   items,
   uninit as remove,
-} from "#Collection"
+} from "./Collection"
 
-import { func } from "#Context"
+import { func } from "./Context"
 
 import Execute, {
   add as decorate,
-} from "#Decorator"
+} from "./Decorator"
 
 import err, {
   Err,
@@ -21,7 +21,7 @@ import err, {
   debug,
   print,
   unhandled,
-} from "#Err"
+} from "./Err"
 
 import {
   type DebugConfig,
@@ -34,7 +34,7 @@ import {
   Mode,
   type ParameterSet,
   type WrappedFunction,
-} from "#types"
+} from "./types"
 
 type Config = {
 	compilerOptions: {
@@ -71,7 +71,7 @@ export const Path = async (
 
   if (paths) {
 		const prefix = Object.keys(paths).find(p => spec.startsWith(p.substring(0, p.length - 1)))
-		const p = paths[prefix!][0].substring(0, paths[prefix!][0].length - 2)
+		const p = paths![prefix!]![0]!.substring(0, paths![prefix!]![0]!.length - 2)
 		const ch = spec.charCodeAt(0)
 		const name = (ch > 64 && ch < 123) ?
 			spec.split(':')[1]
@@ -114,10 +114,12 @@ export const HydrateDependencies = async (
     let use = k
 
     for (const d of v) {
-      output[d] = d[0].match(/[A-Z]/) ?
-        boostrapped[use]!.default
-        :
-        boostrapped[use]![d]
+			output[d] = (
+				d[0]!.match(/[A-Z]/) ?
+	        boostrapped[use]!.default
+	        :
+					boostrapped[use]![d]
+			) as WrappedFunction
     }
   }
 
@@ -134,7 +136,7 @@ export const HydrateDecorators = async (
     for (const [mode, mads] of Object.entries(decs))
       for (const [mad, fns] of Object.entries(mads))
         for (const fn of fns)
-          decorate(spec, fun, mode as Mode, (await Bootstrap(mad, params, root))[fn])
+          decorate(spec, fun, mode as Mode, (await Bootstrap(mad, params, root))[fn] as WrappedFunction)
 }
 
 export const ExtractFunctions = (

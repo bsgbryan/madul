@@ -1,6 +1,6 @@
-import { formatDebug } from "#Context"
+import { formatDebug } from "./lib/Context"
 
-import { type Detail } from "#types"
+import { type Detail } from "./lib/types"
 
 export const report = () => ({
   development: `${process.cwd()}/.madul/development.report`,
