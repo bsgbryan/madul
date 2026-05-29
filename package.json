@@ -1,6 +1,6 @@
 {
   "name": "@bsgbryan/madul",
-  "version": "2026.05.28",
+  "version": "2026.05.29",
   "author": "Bryan Maynard <bsgbryan@gmail.com> (https://bsgbryan.com)",
   "description": "The fun way to do functional programming in TypeScript!",
   "homepage": "https://madul.dev",
@@ -29,10 +29,29 @@
     "#Err": "./lib/Err.ts",
     "#types": "./lib/types.ts"
   },
+  "exports": {
+	 	".": {
+	    "require": {
+	      "types": "./lib/index.ts",
+	      "default": "./lib/index.ts"
+	    },
+	    "import": {
+	      "types": "./lib/index.ts",
+	      "default": "./lib/index.ts"
+	    }
+	  }
+  },
+  "types": "./lib/types.ts",
   "files": [
-    "./lib/index.ts"
+  	"./lib/Boostrap.ts",
+    "./lib/Collection.ts",
+    "./lib/Config.ts",
+    "./lib/Context.ts",
+    "./lib/Decorator.ts",
+    "./lib/Err.ts",
+    "./lib/index.ts",
+    "./lib/types.ts"
   ],
-  "main": "./lib/index.ts",
   "license": "MIT",
   "devDependencies": {
     "@tsconfig/bun": "^1.0.7",
