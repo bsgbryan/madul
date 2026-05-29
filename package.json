@@ -1,6 +1,6 @@
 {
   "name": "@bsgbryan/madul",
-  "version": "2026.05.29",
+  "version": "2026.05.31",
   "author": "Bryan Maynard <bsgbryan@gmail.com> (https://bsgbryan.com)",
   "description": "The fun way to do functional programming in TypeScript!",
   "homepage": "https://madul.dev",
@@ -35,7 +35,7 @@
   },
   "types": "./lib/types.ts",
   "files": [
-  	"./lib/Boostrap.ts",
+  	"./lib/Bootstrap.ts",
     "./lib/Collection.ts",
     "./lib/Config.ts",
     "./lib/Context.ts",
